@@ -8,5 +8,10 @@
 // #include <vector>
 // #include <bitset>
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <limits.h>
 
 #endif
