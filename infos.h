@@ -11,7 +11,8 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdio.h>
 #include <limits.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #endif
