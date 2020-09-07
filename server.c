@@ -6,6 +6,7 @@
 int main(void) {
     int socket = ConexaoRawSocket("lo");
     Message message;
+    // setupterm(NULL, STDOUT_FILENO, NULL);
 
 
     while(1){
@@ -13,7 +14,7 @@ int main(void) {
         if(&message){
             // printf("- \n");
             printMsg(&message);
-            checkParity(&message);
+            // checkParity(&message);
             // printf(message.marker);
         }
 

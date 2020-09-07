@@ -5,15 +5,17 @@
 
 int main(void) {
     char command_line[100];
+    char clearBuf[256]; //JG:
     int socket = ConexaoRawSocket("lo");
     Message message;
-
+    char c = '0';
+    setupterm(NULL, STDOUT_FILENO, NULL);
+    system("clear"); 
 
     while(1){
         showMenu();
-        inicio:
-        //Read and separe user 
-        scanf("%[^\n]",command_line);
+        fgets(command_line, 100, stdin);
+        strtok(command_line, "\n");
         int i = 0;
         char s[2] = " ";
         char *token;
@@ -28,27 +30,26 @@ int main(void) {
             printf("Entrou \n");
             break;
         }
+        else if(strcmp(command[0], "h") == 0){
+            system("clear"); 
+            showHelp();
+        }
         else if(strcmp(command[0], "testar") == 0){
-            message.marker = '~';
-            //message.size = sizeof(); aqui vai o tamanho dos argumentos da função (apenas o data que é usado)
-            message.seq = 1;
-            message.type = 2;
+            setMessage(&message, '~', 1, 1, 2, '~');            
             
-            message.data[0] = 'a';
             if (send(socket, &message, sizeof(message), 0) == -1)            {
                 printf("Deu ruim o envio \n");
                 printf("Erro: %s \n", strerror(errno));
             }
             else
             {
-                printf("Deu boa o envio \n");
-                printf("Erro: %s \n", strerror(errno));
+                printf("Mensagem enviada com sucesso! \n \n");
             }
             
             
             
-            
-            break;
+            // system("clear"); 
+            // break;
         }
         else if(strcmp(command[0], "lls") == 0){
             // printf("%s\n", getcwd(s, 100)); 
@@ -64,7 +65,7 @@ int main(void) {
                 (void) closedir (dp);
             }
             else
-                perror ("Couldn't open the directory");
+                perror ("Não foi possível abrir o");
 
             break;
         }
