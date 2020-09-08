@@ -7,10 +7,11 @@ int main(void) {
     char command_line[100];
     char clearBuf[256]; //JG:
     int socket = ConexaoRawSocket("lo");
-    Message message;
+    Message message_send;
+    Message message_recv;
     char c = '0';
     setupterm(NULL, STDOUT_FILENO, NULL);
-    system("clear"); 
+    // system("clear"); 
 
     while(1){
         showMenu();
@@ -31,43 +32,16 @@ int main(void) {
             break;
         }
         else if(strcmp(command[0], "h") == 0){
-            system("clear"); 
             showHelp();
         }
-        else if(strcmp(command[0], "testar") == 0){
-            setMessage(&message, '~', 1, 1, 2, '~');            
-            
-            if (send(socket, &message, sizeof(message), 0) == -1)            {
-                printf("Deu ruim o envio \n");
-                printf("Erro: %s \n", strerror(errno));
-            }
-            else
-            {
-                printf("Mensagem enviada com sucesso! \n \n");
-            }
-            
-            
-            
-            // system("clear"); 
-            // break;
+        else if(strcmp(command[0], "cd") == 0){
+            cd(&message_send, command[1], socket);                
         }
         else if(strcmp(command[0], "lls") == 0){
-            // printf("%s\n", getcwd(s, 100)); 
-            DIR *dp;
-            struct dirent *ep;     
-            dp = opendir (getcwd(s, 100));
-
-            if (dp != NULL)
-            {
-                while (ep = readdir (dp))
-                puts (ep->d_name);
-
-                (void) closedir (dp);
-            }
-            else
-                perror ("Não foi possível abrir o");
-
-            break;
+            lls();
+        }
+        else if(strcmp(command[0], "lcd") == 0){
+            lcd(command[1]);
         }
         else if(strcmp(command[0], "lcd") == 0){
             chdir(command[1]); 
