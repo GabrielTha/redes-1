@@ -28,7 +28,7 @@ void printMsg(Message *msg){
     printf("Sequencialização: %d \n", msg->seq);
     printf("Tipo: %d \n", msg->type);
     printf("Dados: %s \n", msg->data);
-    printf("Paridade: %d \n", msg->parity);
+    printf("Paridade: %d \n ----------------- \n", msg->parity);
 }
 
 void getParity(Message *msg){
@@ -55,11 +55,11 @@ void setMessage(Message *msg, unsigned char marker, unsigned char size, unsigned
     msg->size = size;
     msg->seq = seq;
     msg->type = type;
+    for (int i = 0; i < 15; i++)
+        msg->data[i] = NULL;
     for (int i = 0; i < size; i++)
         msg->data[i] = data[i];
     getParity(msg);
-    printMsg(msg);
-
 }
 
 void lls(){
@@ -83,19 +83,22 @@ void lls(){
 
 void lcd(char *arg){
     char cwd[PATH_MAX];
-    chdir(arg); 
+    chdir(arg);
+    printf("Diretório modificado! \n"); 
     printf("Diretório atual: %s\n", getcwd(cwd, 100)); 
 }
 
-void cd(Message *msg, char *arg, int socket){
+void cd(Message *msg, Message *msg_recv, char *arg, int socket){
     struct timeval  tv1, tv2;
     double tDecorrido;
+    char controle[20];
     int size = strlen(arg);
     if (size > 15){
         printf("Insira um argumento com no máximo 15 caracteres");
         return;
     }
     setMessage(msg, '~' , size, 1, 0, arg); 
+    jump:
     if (send(socket, msg, sizeof(*msg), 0) == -1)            {
         printf("Erro ao enviar mensagem! \n");
         printf("Erro: %s \n", strerror(errno));
@@ -106,19 +109,55 @@ void cd(Message *msg, char *arg, int socket){
         printf("Mensagem enviada com sucesso! \n");
         printf("Aguardando resposta do Servidor! \n \n");
         while(1){
-            // recv(socket, &message_recv, sizeof(message_recv), 0);
-            // if(&message_recv){
-            //     printf("Recebeu retorno");
-            //     printMsg(&message_recv);
-            //     break;
-            // }
+            getControle(controle);
+                // printf("%s \n",controle);
+            if(strcmp(controle, "Servidor") == 0){
+                recv(socket, msg_recv, sizeof(*msg_recv), 0);
+                recv(socket, msg_recv, sizeof(*msg_recv), 0);
+                if(msg_recv && msg_recv->marker == '~'){ 
+                    printMsg(msg_recv);
+                    setControleCliente();
+                    if(msg_recv->type == 8){
+                        printf("Recebeu ACK do CD \n \n \n");
+                        break;
+                    }
+                }
+            }
             gettimeofday(&tv2, NULL);
             tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
-            if (tDecorrido > 12){
+            if (tDecorrido > 2){
                 printf("Time Out \n \n \n");
-                break;
+                goto jump;
             }
         }
     }
 
+}
+
+void setControleCliente(){
+    //Seta quem esta na vez de escrever
+    FILE *file;
+    file = fopen("/home/gabriel/Documentos/redes-1/controle.txt","w");
+    if (file != NULL){
+        fputs("Cliente", file);
+    };
+    fclose(file);
+}
+
+void setControleServidor(){
+    //Seta quem esta na vez de escrever
+    FILE *file;
+    file = fopen("/home/gabriel/Documentos/redes-1/controle.txt","w");
+    if (file != NULL){
+        fputs("Servidor", file);
+    };
+
+    fclose(file);
+}
+
+void getControle(char *controle){
+    FILE *file;
+    file = fopen("/home/gabriel/Documentos/redes-1/controle.txt","r");
+    fscanf(file, "%s", controle);
+    fclose(file);
 }

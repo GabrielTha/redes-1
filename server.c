@@ -7,26 +7,33 @@ int main(void) {
     int socket = ConexaoRawSocket("lo");
     Message message_recv;
     Message message_send;
+    char controle[20];
     setupterm(NULL, STDOUT_FILENO, NULL);
 
 
     while(1){
-        recv(socket, &message_recv, sizeof(message_recv), 0);
-        if(&message_recv && message_recv.marker == '~'){
-            // printf("- \n");
-            printMsg(&message_recv);
-            int t = checkParity(&message_recv);
-            if(checkParity(&message_recv) == 0){
-                //NACK
+        getControle(controle);
+        if (strcmp(controle, "Cliente") == 0){
+            recv(socket, &message_recv, sizeof(message_recv), 0);
+            recv(socket, &message_recv, sizeof(message_recv), 0);
+            if(&message_recv && message_recv.marker == '~'){ 
+                printf("\n RECEBIDO DO CD: \n");
+                printMsg(&message_recv);
+                setControleServidor();
+                int t = checkParity(&message_recv);
+                if(checkParity(&message_recv) == 0){
+                    //NACK
+                }
+                if (message_recv.type == 0) //CD
+                {
+                    lcd(message_recv.data);
+                    setMessage(&message_send, '~' , 0, 0, 8, 0);
+                    send(socket, &message_send, sizeof(message_send), 0);
+                    printf("Paridade:  %d", t);
+                }
             }
-            
-            printf("Paridade:  %d", t);
-            // setMessage(&message_send, '!', 1, 1, 2, 1);  
-            // send(socket, &message_send, sizeof(message_send), 0);
-            // checkParity(&message);
-            // printf(message.marker);
-        }
 
+        }
     }
         
 }  

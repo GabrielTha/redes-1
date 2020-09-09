@@ -9,9 +9,10 @@ int main(void) {
     int socket = ConexaoRawSocket("lo");
     Message message_send;
     Message message_recv;
+    
     char c = '0';
     setupterm(NULL, STDOUT_FILENO, NULL);
-    // system("clear"); 
+    setControleCliente();
 
     while(1){
         showMenu();
@@ -35,7 +36,7 @@ int main(void) {
             showHelp();
         }
         else if(strcmp(command[0], "cd") == 0){
-            cd(&message_send, command[1], socket);                
+            cd(&message_send, &message_recv, command[1], socket);                
         }
         else if(strcmp(command[0], "lls") == 0){
             lls();
