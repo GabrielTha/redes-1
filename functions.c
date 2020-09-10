@@ -111,7 +111,7 @@ void cd(Message *msg, Message *msg_recv, char *arg, int socket){
         while(1){
             getControle(controle);
                 // printf("%s \n",controle);
-            if(strcmp(controle, "Servidor") == 0){
+            // if(strcmp(controle, "Servidor") == 0){
                 recv(socket, msg_recv, sizeof(*msg_recv), 0);
                 recv(socket, msg_recv, sizeof(*msg_recv), 0);
                 if(msg_recv && msg_recv->marker == '~'){ 
@@ -121,8 +121,16 @@ void cd(Message *msg, Message *msg_recv, char *arg, int socket){
                         printf("Recebeu ACK do CD \n \n \n");
                         break;
                     }
+                    if(msg_recv->type == 9){
+                        printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n");
+                        goto jump;
+                    }
+                    if(msg_recv == msg){
+                        printf("Mensagem ignorada! ACK do CD \n \n \n");
+                        break;
+                    }
                 }
-            }
+            // }
             gettimeofday(&tv2, NULL);
             tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
             if (tDecorrido > 2){

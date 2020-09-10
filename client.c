@@ -36,7 +36,8 @@ int main(void) {
             showHelp();
         }
         else if(strcmp(command[0], "cd") == 0){
-            cd(&message_send, &message_recv, command[1], socket);                
+            cd(&message_send, &message_recv, command[1], socket);      
+            system("clear"); 
         }
         else if(strcmp(command[0], "lls") == 0){
             lls();
