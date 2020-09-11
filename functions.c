@@ -27,8 +27,12 @@ void printMsg(Message *msg){
     printf("Tamanho: %d \n", msg->size);
     printf("Sequencialização: %d \n", msg->seq);
     printf("Tipo: %d \n", msg->type);
-    printf("Dados: %s \n", msg->data);
-    printf("Paridade: %d \n ----------------- \n", msg->parity);
+    // printf("Dados: %s \n", msg->data);
+    printf("Dados:");
+     for (int i = 0; i < 15; i++){
+        printf("%c", msg->data[i]);
+    }
+    printf("\nParidade: %d \n ----------------- \n", msg->parity);
 }
 
 void getParity(Message *msg){
@@ -57,8 +61,11 @@ void setMessage(Message *msg, unsigned char marker, unsigned char size, unsigned
     msg->type = type;
     for (int i = 0; i < 15; i++)
         msg->data[i] = NULL;
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < size; i++){
+        printf("%c", data[i]);
         msg->data[i] = data[i];
+    }
+    printf("\n");
     getParity(msg);
 }
 
@@ -69,10 +76,10 @@ void lls(){
     dp = opendir (getcwd(cwd, 100));
     if (dp != NULL){
         while (ep = readdir (dp))
-        if (ep->d_type == 4)
-            printf("%s/ \n", ep->d_name);
-        else
-            printf("%s \n", ep->d_name);
+            if (ep->d_type == 4)
+                printf("%s/ \n", ep->d_name);
+            else
+                printf("%s \n", ep->d_name);
         (void) closedir (dp);
         printf("\n");
     }
@@ -97,7 +104,7 @@ void cd(Message *msg, Message *msg_recv, char *arg, int socket){
         printf("Insira um argumento com no máximo 15 caracteres");
         return;
     }
-    setMessage(msg, '~' , size, 1, 0, arg); 
+    setMessage(msg, '~' , size, 0, 0, arg); 
     jump:
     if (send(socket, msg, sizeof(*msg), 0) == -1)            {
         printf("Erro ao enviar mensagem! \n");
@@ -111,7 +118,7 @@ void cd(Message *msg, Message *msg_recv, char *arg, int socket){
         while(1){
             getControle(controle);
                 // printf("%s \n",controle);
-            // if(strcmp(controle, "Servidor") == 0){
+            if(strcmp(controle, "Servidor") == 0){
                 recv(socket, msg_recv, sizeof(*msg_recv), 0);
                 recv(socket, msg_recv, sizeof(*msg_recv), 0);
                 if(msg_recv && msg_recv->marker == '~'){ 
@@ -128,6 +135,65 @@ void cd(Message *msg, Message *msg_recv, char *arg, int socket){
                     if(msg_recv == msg){
                         printf("Mensagem ignorada! ACK do CD \n \n \n");
                         break;
+                    }
+                }
+            }
+            gettimeofday(&tv2, NULL);
+            tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
+            if (tDecorrido > 2){
+                printf("Time Out \n \n \n");
+                goto jump;
+            }
+        }
+    }
+
+}
+
+void ls(Message *msg, Message *msg_recv, char *arg, int socket){
+    struct timeval  tv1, tv2;
+    double tDecorrido;
+    char controle[20];
+    int size = strlen(arg);
+    if (size > 15){
+        printf("Insira um argumento com no máximo 15 caracteres");
+        return;
+    }
+    setMessage(msg, '~' , size, 0, 1, arg); 
+    jump:
+    if (send(socket, msg, sizeof(*msg), 0) == -1)            {
+        printf("Erro ao enviar mensagem! \n");
+        printf("Erro: %s \n", strerror(errno));
+    }
+    else
+    {
+        gettimeofday(&tv1, NULL);
+        printf("Mensagem enviada com sucesso! \n");
+        printf("Aguardando resposta do Servidor! \n \n");
+        while(1){
+            getControle(controle);
+            // if(strcmp(controle, "Servidor") == 0){
+                recv(socket, msg_recv, sizeof(*msg_recv), 0);
+                recv(socket, msg_recv, sizeof(*msg_recv), 0);
+                if(msg_recv && msg_recv->marker == '~'){ 
+                    printMsg(msg_recv);
+                    // setControleCliente();
+                    if (msg_recv->type == 13){ //FIM DE TRANSMISSÃO
+                        setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
+                        send(socket, msg, sizeof(*msg), 0);
+                        printf("ENVIOU ACK\n");
+                        setControleCliente();
+                        sleep(2);
+                        return;
+                    }
+                    
+                    if(msg_recv->type == 11){
+                        setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
+                        send(socket, msg, sizeof(*msg), 0);
+                        printf("ENVIOU ACK\n");
+                    }
+                    if(msg_recv->type == 9){
+                        printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n");
+                        goto jump;
                     }
                 }
             // }

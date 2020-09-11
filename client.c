@@ -12,9 +12,9 @@ int main(void) {
     
     char c = '0';
     setupterm(NULL, STDOUT_FILENO, NULL);
-    setControleCliente();
 
     while(1){
+        setControleCliente();
         showMenu();
         fgets(command_line, 100, stdin);
         strtok(command_line, "\n");
@@ -37,6 +37,10 @@ int main(void) {
         }
         else if(strcmp(command[0], "cd") == 0){
             cd(&message_send, &message_recv, command[1], socket);      
+            system("clear"); 
+        }
+        else if(strcmp(command[0], "ls") == 0){
+            ls(&message_send, &message_recv, command[1], socket);      
             system("clear"); 
         }
         else if(strcmp(command[0], "lls") == 0){
