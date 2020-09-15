@@ -37,11 +37,11 @@ int main(void) {
         }
         else if(strcmp(command[0], "cd") == 0){
             cd(&message_send, &message_recv, command[1], socket);      
-            system("clear"); 
+            // system("clear"); 
         }
         else if(strcmp(command[0], "ls") == 0){
             ls(&message_send, &message_recv, command[1], socket);      
-            system("clear"); 
+            // system("clear"); 
         }
         else if(strcmp(command[0], "lls") == 0){
             lls();
