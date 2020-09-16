@@ -158,7 +158,7 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
     double tDecorrido;
     int tam_strings = 0; 
     char controle[20];
-    char ls[100][100];
+    char ls[1000][1000];
     int i = 0;
     char s[2] = "|";
     char *token;
@@ -225,7 +225,8 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
                     goto jump;
                 }
                 if(msg_recv->type == 15){
-                    printf("Recebeu ERRO do LS \n");
+
+                    printf("Erro de permissão no diretório do servidor! \n");
                     return;
                 }
             }
@@ -236,6 +237,19 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
                 goto jump;
             }
         }
+    }
+}
+
+void ver(Message *msg, Message *msg_recv, char *arg, int socket){
+    struct node{
+        char nData[15];
+        struct node *pLink;
+    };
+    int size = strlen(arg);
+    setMessage(msg, '~' , size, 0, 2, arg); 
+    if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
+        printf("Erro ao enviar mensagem! \n");
+        printf("Erro: %s \n", strerror(errno));
     }
 }
 

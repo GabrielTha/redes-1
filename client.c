@@ -43,6 +43,10 @@ int main(void) {
             ls(&message_send, &message_recv, command[1], socket);      
             // system("clear"); 
         }
+        else if(strcmp(command[0], "ver") == 0){
+            ver(&message_send, &message_recv, command[1], socket);      
+            // system("clear"); 
+        }
         else if(strcmp(command[0], "lls") == 0){
             lls();
         }

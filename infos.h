@@ -18,5 +18,6 @@
 #include <sys/time.h>
 #include <math.h>
 #include "functions.h"
+#include "lista.c"
 
 #endif

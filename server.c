@@ -24,6 +24,7 @@ int main(void) {
                     setMessage(&message_send, '~' , 0, 0, 9, 0);
                     send(socket, &message_send, sizeof(message_send), 0);
                     printf("ENVIOU NACK\n");
+                    goto origem;
                 }
                 if (message_recv.type == 0){ //CD
                     lcd(message_recv.data);
@@ -32,7 +33,7 @@ int main(void) {
                     printf("Paridade:  %d", t);
                 }
                 if (message_recv.type == 1){ //LS
-                    char ls[100][100];
+                    char ls[1000][1000];
                     char *ls_full;
                     int tam_strings = 0; 
                     int tam_strings_aux = 0; 
@@ -41,6 +42,7 @@ int main(void) {
                     int n_msgs_ctr = 0;
                     int i = 0;
                     int z = 0;
+                    errno = 0; 
                     struct timeval  tv1, tv2;
                     double tDecorrido;
                     unsigned char data[15];
@@ -62,6 +64,14 @@ int main(void) {
                                 i++;
                             }
                         (void) closedir (dp);
+                        if (0 != errno){
+                            for (int i = 0; i < 15; i++)
+                                data[i] = NULL;
+                            data[0] = 1;
+                            setMessage(&message_send, '~' , 0, 0, 15, data);
+                            send(socket, &message_send, sizeof(message_send), 0);
+                            goto origem;
+                        }
                         ls_full = (char *)malloc(tam_strings * sizeof(char));
                         for (int k = 0; k < i; k++)
                         {
@@ -164,6 +174,46 @@ int main(void) {
                     else
                         perror ("Não foi possível realizar essa ação! \n");
                 }
+                if (message_recv.type == 2){ //VER
+                    char dados[15];
+                    printf("%s \n", message_recv.data);
+                    FILE * stream;
+                    stream = fopen(message_recv.data, "r");
+                    while(fread(dados, 1, 3, stream) != EOF) {
+                        dados[3] = "\0";
+                        printf("%c", dados);
+                        break;
+                    }
+                    
+                    fclose(stream);
+                    // Printing data to check validity
+                }
+                
             }
     }
 }  
+
+
+
+//int comando_ver(No *enviar, char *arquivo, unsigned char *seqEnv) {
+//	Mensagem mensagem;
+//	char dados[15];
+//
+//
+//	FILE* farquivo = fopen(arquivo, "r");
+//	if(farquivo == NULL) {
+//	    fprintf(stderr, "Erro ao abrir o arquivo.txt.");
+//	    return 1;
+//	}
+//
+//	while((fgets(dados), 15, farquivo) != NULL) {
+//		gerar_mensagem(&mensagem, *seqEnv, TIPO_CONT_LS, (unsigned char) strlen(dados), dados);
+//		inserir_mensagem(enviar, mensagem);
+//		*seqEnv += 1;
+//	}
+//	gerar_mensagem(&mensagem, *seqEnv, TIPO_FIM, (unsigned char) 0, NULL);
+//	inserir_mensagem(enviar, mensagem);
+//	*seqEnv += 1;
+//
+//	return fclose(farquivo);
+//}
