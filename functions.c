@@ -60,7 +60,7 @@ void setMessage(Message *msg, unsigned char marker, unsigned char size, unsigned
     msg->seq = seq;
     msg->type = type;
     for (int i = 0; i < 15; i++)
-        msg->data[i] = NULL;
+        msg->data[i] = 0;
     for (int i = 0; i < size; i++){
         printf("%c", data[i]);
         msg->data[i] = data[i];
@@ -121,7 +121,6 @@ void cd(Message *msg, Message *msg_recv, char *arg, int socket){
         printf("Mensagem enviada com sucesso! \n");
         printf("Aguardando resposta do Servidor! \n \n");
         while(1){
-            getControle(controle);
                 recv(socket, msg_recv, sizeof(*msg_recv), 0);
                 recv(socket, msg_recv, sizeof(*msg_recv), 0);
                 if(msg_recv && msg_recv->marker == '~'){ 
@@ -160,7 +159,7 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
     char controle[20];
     char ls[1000][1000];
     int i = 0;
-    char s[2] = "|";
+    char s[2] = "\a";
     char *token;
     int size = strlen(arg);
     if (size > 15){
@@ -178,7 +177,6 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
         printf("Mensagem enviada com sucesso! \n");
         printf("Aguardando resposta do Servidor! \n \n");
         while(1){ //ESPERANDO RESPOSTA DO SERVIDOR SOBRE O COMANDO INICIAL (DADOS, NACK ou ERRO)
-            getControle(controle);
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             if(msg_recv && msg_recv->marker == '~'){ 
@@ -246,11 +244,76 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
         struct node *pLink;
     };
     int size = strlen(arg);
+    int seq = 0;
+    char *str_all = (char *) malloc(1 * sizeof(char));
+    int cont = 0;
+    int n_lin = 1;
+    struct timeval  tv1, tv2;
     setMessage(msg, '~' , size, 0, 2, arg); 
     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
         printf("Erro ao enviar mensagem! \n");
         printf("Erro: %s \n", strerror(errno));
     }
+    else
+    {
+        gettimeofday(&tv1, NULL);
+        printf("Mensagem enviada com sucesso! \n");
+        printf("Aguardando resposta do Servidor! \n \n");
+        while(1){ //ESPERANDO RESPOSTA DO SERVIDOR SOBRE O COMANDO INICIAL (DADOS, NACK ou ERRO)
+            recv(socket, msg_recv, sizeof(*msg_recv), 0);
+            recv(socket, msg_recv, sizeof(*msg_recv), 0);
+            if(msg_recv && msg_recv->marker == '~'){ 
+                if(msg_recv->type == 11){ //Recebendo DADOS - 1100
+                    // if (checkParity(msg_recv) == 1 && msg_recv->seq == seq){
+                    if (checkParity(msg_recv) == 1){
+                        cont++;
+                        str_all = (char *) realloc(str_all, (cont*15*8));
+                        strcat(str_all, msg_recv->data);
+                        // printMsg(msg_recv);
+                        char str_aux[15];
+                        strcpy(str_aux, msg_recv->data);
+                        // str_aux[strlen(str_aux)]='\0';
+                        // printf("%s", str_aux);
+                        if(strstr(str_aux, "\a") != 0){
+                            str_all[strcspn(str_all, "\a")] = 0;
+                            printf("%d - %s", n_lin, str_all);
+                            n_lin++;
+                            free(str_all);
+                            cont = 0;
+                            str_all = (char *) malloc(1 * sizeof(char));
+                        }
+                        setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
+                        send(socket, msg, sizeof(*msg), 0);
+                    }
+                    else{
+                        setMessage(msg, '~' , 0, 0, 9, 0); //Enviando NACK
+                        send(socket, msg, sizeof(*msg), 0);
+                    }
+                }
+                if (msg_recv->type == 13){ //FIM DE TRANSMISSÃO - 1101
+                    if (checkParity(msg_recv) == 1){
+                        setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
+                        send(socket, msg, sizeof(*msg), 0);
+                    }
+                    else{
+                        setMessage(msg, '~' , 0, 0, 9, 0); //Enviando NACK
+                        send(socket, msg, sizeof(*msg), 0);
+                    }
+                    return;
+                }
+            }
+        }
+    }
+    
+}
+
+char * concatena(char *s1, const char *s2) { 
+    const size_t a = strlen(s1); 
+    const size_t b = strlen(s2); 
+    const size_t size_ab = a + b + 1; 
+    s1 = realloc(s1, size_ab); 
+    memcpy(s1 + a, s2, b + 1); 
+    return s1; 
 }
 
 void setControleCliente(){

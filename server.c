@@ -12,7 +12,6 @@ int main(void) {
 
     origem:
     while(1){
-        getControle(controle);
             recv(socket, &message_recv, sizeof(message_recv), 0);
             recv(socket, &message_recv, sizeof(message_recv), 0);
             if(&message_recv && message_recv.marker == '~'){ 
@@ -76,7 +75,7 @@ int main(void) {
                         for (int k = 0; k < i; k++)
                         {
                             strcat(ls_full , ls[k]);
-                            strcat(ls_full , "|");
+                            strcat(ls_full , "\a");
                         }
                         n_msgs = tam_strings / 15;
                         tam_ctrl = tam_strings;
@@ -108,10 +107,7 @@ int main(void) {
                             else
                             {
                                 gettimeofday(&tv1, NULL);
-                                printf("Mensagem enviada com sucesso! \n");
-                                printf("Aguardando resposta do Servidor! \n \n");
                                 while(1){
-                                    getControle(controle);
                                         recv(socket, &message_recv, sizeof(message_recv), 0);
                                         recv(socket, &message_recv, sizeof(message_recv), 0);
                                         if(&message_recv && message_recv.marker == '~'){ 
@@ -145,10 +141,7 @@ int main(void) {
                         else
                         {
                             gettimeofday(&tv1, NULL);
-                            printf("Mensagem enviada com sucesso! \n");
-                            printf("Aguardando resposta do Servidor! \n \n");
                             while(1){
-                                getControle(controle);
                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                     if(&message_recv && message_recv.marker == '~'){ 
@@ -175,45 +168,137 @@ int main(void) {
                         perror ("Não foi possível realizar essa ação! \n");
                 }
                 if (message_recv.type == 2){ //VER
-                    char dados[15];
-                    printf("%s \n", message_recv.data);
-                    FILE * stream;
-                    stream = fopen(message_recv.data, "r");
-                    while(fread(dados, 1, 3, stream) != EOF) {
-                        dados[3] = "\0";
-                        printf("%c", dados);
-                        break;
+
+                    FILE *file;
+                    char linha[1000];
+                    char *str_all = (char *) malloc(1 * sizeof(char));
+                    int str_size = 1;
+                    int aux,line=0,count=0;
+                    char * pre_linha;
+                    char buf[1000];
+                    char ls[1000][1000];
+                    char *ls_full;
+                    int tam_strings = 0; 
+                    int tam_strings_aux = 0; 
+                    int tam_ctrl = 0;
+                    int n_msgs = 0;
+                    int n_msgs_ctr = 0;
+                    int i = 0;
+                    int z = 0;
+                    errno = 0; 
+                    struct timeval  tv1, tv2;
+                    double tDecorrido;
+                    unsigned char data[15];
+                    char linha_aux[1000];
+
+                    if((file = fopen(message_recv.data,"r")) == NULL){
+                        goto origem;
                     }
-                    
-                    fclose(stream);
-                    // Printing data to check validity
+                    else
+                    {
+                        while(fgets(linha,sizeof(linha),file) != NULL)
+                        {
+                            for(aux=0; linha[aux]; aux++) 
+                                if(linha[aux]=='\n'){
+                                    count++;
+                                    printf("%d - %s",(strlen(linha)/14), linha);
+                                    printf("---------\n");
+                                    linha[(strlen(linha)-1)] = '\0';
+                                    strcat(linha, "\a"),
+                                    tam_strings = strlen(linha);
+                                    n_msgs =  round(tam_strings / 14);
+                                    tam_ctrl = tam_strings;
+                                    tam_strings_aux = tam_strings;
+                                    n_msgs_ctr = n_msgs_ctr;
+                                    printf("STRING: %s\n", linha);
+                                    printf("TAMANHO DA STRING: %d\n", tam_strings);
+                                    printf("NUMERO DE MSG: %d\n", n_msgs);
+                                    for (z = 0; z <= n_msgs; z++){
+                                        for (int i = 0; i < 15; i++)
+                                            data[i] = 0;
+                                        for (int i = 0; i < 14; i++){
+                                            data[i] = linha[tam_strings_aux - tam_ctrl];
+                                            tam_ctrl--;
+                                        }
+                                        data[15]= '\0';
+                                        if (tam_strings >= 15){
+                                            setMessage(&message_send, '~' , 15, z, 11, data); 
+                                        }
+                                        else{
+                                            setMessage(&message_send, '~' , tam_strings, z, 11, data); 
+                                        }
+                                        printMsg(&message_send);
+                                        jump4:
+                                        if (send(socket, &message_send, sizeof(message_send), 0) == -1){ //ENVIANDO DADOS - 1011
+                                            printf("Erro ao enviar mensagem! \n");
+                                            printf("Erro: %s \n", strerror(errno));
+                                        }
+                                        else
+                                        {
+                                            gettimeofday(&tv1, NULL);
+                                            while(1){
+                                                    recv(socket, &message_recv, sizeof(message_recv), 0);
+                                                    recv(socket, &message_recv, sizeof(message_recv), 0);
+                                                    if(&message_recv && message_recv.marker == '~'){ 
+                                                        setControleServidor();
+                                                        if(message_recv.type == 8){
+                                                            break;
+                                                        }
+                                                        if(message_recv.type == 9){
+                                                            printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n");
+                                                            goto jump4;
+                                                        }
+                                                    }
+                                                gettimeofday(&tv2, NULL);
+                                                tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
+                                                if (tDecorrido > 12){
+                                                    printf("Time Out \n \n \n");
+                                                    goto jump4;
+                                                }
+                                            }
+                                        }
+                                        n_msgs_ctr--;
+                                        tam_strings -= 14;
+                                    }
+
+                                }	
+                        }
+                    }	
+                    fclose(file);
+                    setMessage(&message_send, '~' , 0, z, 13, data); 
+                        // printMsg(&message_send); 
+                        jump5:
+                        if (send(socket, &message_send, sizeof(message_send), 0) == -1){ //ENVIAR FIM DE TRANSMISSÃO - 1101
+                            printf("Erro ao enviar mensagem! \n");
+                            printf("Erro: %s \n", strerror(errno));
+                        }
+                        else
+                        {
+                            gettimeofday(&tv1, NULL);
+                            while(1){
+                                    recv(socket, &message_recv, sizeof(message_recv), 0);
+                                    recv(socket, &message_recv, sizeof(message_recv), 0);
+                                    if(&message_recv && message_recv.marker == '~'){ 
+                                        setControleServidor();
+                                        if(message_recv.type == 8){
+                                            printf("Recebeu ACK do LS \n \n \n");
+                                            goto origem;
+                                        }
+                                        if(message_recv.type == 9){
+                                            printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n");
+                                            goto jump5;
+                                        }
+                                    }
+                                gettimeofday(&tv2, NULL);
+                                tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
+                                if (tDecorrido > 12){
+                                    printf("Time Out \n \n \n");
+                                    goto jump5;
+                                }
+                            }
+                        }
+
                 }
-                
             }
     }
 }  
-
-
-
-//int comando_ver(No *enviar, char *arquivo, unsigned char *seqEnv) {
-//	Mensagem mensagem;
-//	char dados[15];
-//
-//
-//	FILE* farquivo = fopen(arquivo, "r");
-//	if(farquivo == NULL) {
-//	    fprintf(stderr, "Erro ao abrir o arquivo.txt.");
-//	    return 1;
-//	}
-//
-//	while((fgets(dados), 15, farquivo) != NULL) {
-//		gerar_mensagem(&mensagem, *seqEnv, TIPO_CONT_LS, (unsigned char) strlen(dados), dados);
-//		inserir_mensagem(enviar, mensagem);
-//		*seqEnv += 1;
-//	}
-//	gerar_mensagem(&mensagem, *seqEnv, TIPO_FIM, (unsigned char) 0, NULL);
-//	inserir_mensagem(enviar, mensagem);
-//	*seqEnv += 1;
-//
-//	return fclose(farquivo);
-//}
