@@ -68,11 +68,6 @@ void setMessage(Message *msg, unsigned char marker, unsigned char size, unsigned
     getParity(msg);
 }
 
-// void clearData(Message *msg){
-//     for (int i = 0; i < 15; i++)
-//         msg->data[i] = NULL;
-// }
-
 void lls(){
     char cwd[PATH_MAX];
     DIR *dp;
