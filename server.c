@@ -224,7 +224,6 @@ int main(void) {
                     double tDecorrido;
                     unsigned char data[15];
                     char linha_aux[1000];
-
                     if((file = fopen(message_recv.data,"r")) == NULL){
                         goto origem;
                     }
