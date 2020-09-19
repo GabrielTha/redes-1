@@ -8,6 +8,7 @@ int main(void) {
     Message message_recv;
     Message message_send;
     char controle[20];
+    unsigned char data[15];
     setupterm(NULL, STDOUT_FILENO, NULL);
 
     origem:
@@ -16,9 +17,10 @@ int main(void) {
             recv(socket, &message_recv, sizeof(message_recv), 0);
             if(&message_recv && message_recv.marker == '~'){ 
                 int t = checkParity(&message_recv);
-                if((message_recv.type == message_send.type)){
-                    goto origem;
-                }
+                // printMsg(&message_recv);
+                // if((message_recv.type == message_send.type)){
+                //     goto origem;
+                // }
                 if(checkParity(&message_recv) == 0 && message_recv.type != 8 && message_recv.type != 9){ //NACK - 1001 (Não envia Nack para Ack/Nack)
                     setMessage(&message_send, '~' , 0, 0, 9, 0);
                     send(socket, &message_send, sizeof(message_send), 0);
@@ -26,9 +28,31 @@ int main(void) {
                     goto origem;
                 }
                 if (message_recv.type == 0){ //CD
-                    lcd(message_recv.data);
-                    setMessage(&message_send, '~' , 0, 0, 8, 0); //ACK
-                    send(socket, &message_send, sizeof(message_send), 0);
+                    char cwd[PATH_MAX];
+                    if (chdir(message_recv.data) == 0){
+                        printf("Diretório modificado! \n"); 
+                        printf("Diretório atual: %s\n", getcwd(cwd, 100)); 
+                        setMessage(&message_send, '~' , 0, 0, 8, 0); //ACK
+                        send(socket, &message_send, sizeof(message_send), 0);
+                    }
+                    else{
+                        if (errno == 1){ //Detecta NÃO PERMITIDO
+                            for (int i = 0; i < 15; i++)
+                                data[i] = NULL;
+                            data[0] = '1';
+                        }
+                        if (errno == 2){ //Detecta NÃO EXISTENTE
+                            for (int i = 0; i < 15; i++)
+                                data[i] = NULL;
+                            data[0] = '2';
+                        }
+                        setMessage(&message_send, '~' , 1, 0, 15, data);
+                        send(socket, &message_send, sizeof(message_send), 0);
+                        goto origem;
+                        
+                    }
+
+                    
                     printf("Paridade:  %d", t);
                 }
                 if (message_recv.type == 1){ //LS
@@ -49,6 +73,16 @@ int main(void) {
                     DIR *dp;
                     struct dirent *ep;     
                     dp = opendir (getcwd(cwd, 100));
+                    if (dp == NULL){
+                        printf("Erro: %s \n", strerror(errno));
+                    }
+                    // for (size_t i = 0; i < sizeof(ls); i++)
+                    //     // strcpy(ls[i], '\0');
+                    //     ls[i] = NULL;
+                    // for (size_t i = 0; i < sizeof(ls_full); i++)
+                    //     ls_full[i] = NULL;
+                    //     // strcpy(ls_full[i], '\0');
+                    
                     if (dp != NULL){
                         while (ep = readdir (dp))
                             if (ep->d_type == 4){
@@ -63,7 +97,7 @@ int main(void) {
                                 i++;
                             }
                         (void) closedir (dp);
-                        if (0 != errno){
+                        if (errno != 0){ //Detecta Erro de Permissão
                             for (int i = 0; i < 15; i++)
                                 data[i] = NULL;
                             data[0] = 1;
@@ -72,8 +106,8 @@ int main(void) {
                             goto origem;
                         }
                         ls_full = (char *)malloc(tam_strings * sizeof(char));
-                        for (int k = 0; k < i; k++)
-                        {
+                        memset(ls_full,NULL,sizeof(ls_full));
+                        for (int k = 0; k < i; k++){
                             strcat(ls_full , ls[k]);
                             strcat(ls_full , "\a");
                         }
@@ -111,7 +145,7 @@ int main(void) {
                                         recv(socket, &message_recv, sizeof(message_recv), 0);
                                         recv(socket, &message_recv, sizeof(message_recv), 0);
                                         if(&message_recv && message_recv.marker == '~'){ 
-                                            setControleServidor();
+                                            //setControleServidor();
                                             if(message_recv.type == 8){
                                                 break;
                                             }
@@ -145,7 +179,7 @@ int main(void) {
                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                     if(&message_recv && message_recv.marker == '~'){ 
-                                        setControleServidor();
+                                        //setControleServidor();
                                         if(message_recv.type == 8){
                                             printf("Recebeu ACK do LS \n \n \n");
                                             goto origem;
@@ -168,9 +202,9 @@ int main(void) {
                         perror ("Não foi possível realizar essa ação! \n");
                 }
                 if (message_recv.type == 2){ //VER
-
                     FILE *file;
                     char linha[1000];
+                    char cnt_linha[1000];
                     char *str_all = (char *) malloc(1 * sizeof(char));
                     int str_size = 1;
                     int aux,line=0,count=0;
@@ -201,8 +235,12 @@ int main(void) {
                             for(aux=0; linha[aux]; aux++) 
                                 if(linha[aux]=='\n'){
                                     count++;
-                                    printf("%d - %s",(strlen(linha)/14), linha);
-                                    printf("---------\n");
+                                    sprintf(cnt_linha, "%d", count); 
+                                    strcat(cnt_linha, " - ");
+                                    strcat(cnt_linha, linha);
+                                    strcpy(linha, cnt_linha);
+                                    // printf("%d - %s",(strlen(linha)/14), linha);
+                                    // printf("---------\n");
                                     linha[(strlen(linha)-1)] = '\0';
                                     strcat(linha, "\a"),
                                     tam_strings = strlen(linha);
@@ -240,7 +278,7 @@ int main(void) {
                                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                                     if(&message_recv && message_recv.marker == '~'){ 
-                                                        setControleServidor();
+                                                        //setControleServidor();
                                                         if(message_recv.type == 8){
                                                             break;
                                                         }
@@ -279,7 +317,7 @@ int main(void) {
                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                     if(&message_recv && message_recv.marker == '~'){ 
-                                        setControleServidor();
+                                        //setControleServidor();
                                         if(message_recv.type == 8){
                                             printf("Recebeu ACK do LS \n \n \n");
                                             goto origem;

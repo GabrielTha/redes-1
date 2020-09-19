@@ -14,7 +14,7 @@ int main(void) {
     setupterm(NULL, STDOUT_FILENO, NULL);
 
     while(1){
-        setControleCliente();
+        //setControleCliente();
         showMenu();
         fgets(command_line, 100, stdin);
         strtok(command_line, "\n");

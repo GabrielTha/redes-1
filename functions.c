@@ -62,23 +62,23 @@ void setMessage(Message *msg, unsigned char marker, unsigned char size, unsigned
     for (int i = 0; i < 15; i++)
         msg->data[i] = 0;
     for (int i = 0; i < size; i++){
-        printf("%c", data[i]);
         msg->data[i] = data[i];
     }
     printf("\n");
     getParity(msg);
 }
 
-void clearData(Message *msg){
-    for (int i = 0; i < 15; i++)
-        msg->data[i] = NULL;
-}
+// void clearData(Message *msg){
+//     for (int i = 0; i < 15; i++)
+//         msg->data[i] = NULL;
+// }
 
 void lls(){
     char cwd[PATH_MAX];
     DIR *dp;
     struct dirent *ep;     
     dp = opendir (getcwd(cwd, 100));
+    printf("Diretório atual: %s\n", getcwd(cwd, 100)); 
     if (dp != NULL){
         while (ep = readdir (dp))
             if (ep->d_type == 4)
@@ -89,15 +89,19 @@ void lls(){
         printf("\n");
     }
     else
-        perror ("Não foi possível realizar essa ação! \n");
+        printf("Erro: %s \n", strerror(errno));
 
 }
 
 void lcd(char *arg){
     char cwd[PATH_MAX];
-    chdir(arg);
-    printf("Diretório modificado! \n"); 
-    printf("Diretório atual: %s\n", getcwd(cwd, 100)); 
+    if (chdir(arg) == 0){
+        printf("Diretório modificado! \n"); 
+        printf("Diretório atual: %s\n", getcwd(cwd, 100)); 
+    }
+    else{
+        printf("Erro: %s \n", strerror(errno));
+    }
 }
 
 void cd(Message *msg, Message *msg_recv, char *arg, int socket){
@@ -124,19 +128,28 @@ void cd(Message *msg, Message *msg_recv, char *arg, int socket){
                 recv(socket, msg_recv, sizeof(*msg_recv), 0);
                 recv(socket, msg_recv, sizeof(*msg_recv), 0);
                 if(msg_recv && msg_recv->marker == '~'){ 
-                    setControleCliente();
-                    if(msg_recv->type == 8){
+                    // setControleCliente();
+                    if(msg_recv->type == 8){ //ACK
                         printf("Recebeu ACK do CD \n \n \n");
                         break;
                     }
-                    if(msg_recv->type == 9){
+                    if(msg_recv->type == 9){ //NACK
                         printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n");
                         goto jump;
                     }
-                    if(msg_recv == msg){
-                        printf("Mensagem ignorada! ACK do CD \n \n \n");
+                    if(msg_recv->type == 15){ //ERRO 
+                        if (msg_recv->data[0] == '1'){
+                            printf("Você não tem permissão no servidor para acessar o diretório: %s! \n \n", arg);
+                        }
+                        if (msg_recv->data[0] == '2'){
+                            printf("O diretório '%s' não existe no servidor! \n \n", arg);
+                        }
                         break;
                     }
+                    // if(msg_recv == msg){
+                    //     printf("Mensagem ignorada! ACK do CD \n \n \n");
+                    //     break;
+                    // }
                 }
             gettimeofday(&tv2, NULL);
             tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
@@ -183,6 +196,7 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
                 if (msg_recv->type == 13){ //FIM DE TRANSMISSÃO - 1101
                     if (checkParity(msg_recv) == 1 && msg_recv->seq == seq){
                         ls_full = (char *)malloc(tam_strings+1 * sizeof(char));
+                        memset(ls_full,NULL,sizeof(ls_full));
                         for (int k = 0; k < i; k++)
                         {
                             strcat(ls_full , ls[k]);
@@ -218,12 +232,11 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
                         send(socket, msg, sizeof(*msg), 0);
                     }
                 }
-                if(msg_recv->type == 9){
-                    printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); //Recebendo NACK - 1001
+                if(msg_recv->type == 9){ //Recebendo NACK - 1001
+                    printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
                     goto jump;
                 }
-                if(msg_recv->type == 15){
-
+                if(msg_recv->type == 15){ //Recebendo ERRO
                     printf("Erro de permissão no diretório do servidor! \n");
                     return;
                 }
@@ -276,11 +289,13 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
                         // printf("%s", str_aux);
                         if(strstr(str_aux, "\a") != 0){
                             str_all[strcspn(str_all, "\a")] = 0;
-                            printf("%d - %s", n_lin, str_all);
+                            // printf("%d - %s", n_lin, str_all);
+                            printf("%s", str_all);
                             n_lin++;
-                            free(str_all);
                             cont = 0;
+                            free(str_all);
                             str_all = (char *) malloc(1 * sizeof(char));
+                            memset(str_all,NULL,sizeof(str_all));
                         }
                         setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
                         send(socket, msg, sizeof(*msg), 0);
@@ -316,30 +331,30 @@ char * concatena(char *s1, const char *s2) {
     return s1; 
 }
 
-void setControleCliente(){
-    //Seta quem esta na vez de escrever
-    FILE *file;
-    file = fopen("/home/gabriel/Documentos/redes-1/controle.txt","w");
-    if (file != NULL){
-        fputs("Cliente", file);
-    };
-    fclose(file);
-}
+// void setControleCliente(){
+//     //Seta quem esta na vez de escrever
+//     FILE *file;
+//     file = fopen("/home/gabriel/Documentos/redes-1/controle.txt","w");
+//     if (file != NULL){
+//         fputs("Cliente", file);
+//     };
+//     fclose(file);
+// }
 
-void setControleServidor(){
-    //Seta quem esta na vez de escrever
-    FILE *file;
-    file = fopen("/home/gabriel/Documentos/redes-1/controle.txt","w");
-    if (file != NULL){
-        fputs("Servidor", file);
-    };
+// void //setControleServidor(){
+//     //Seta quem esta na vez de escrever
+//     FILE *file;
+//     file = fopen("/home/gabriel/Documentos/redes-1/controle.txt","w");
+//     if (file != NULL){
+//         fputs("Servidor", file);
+//     };
 
-    fclose(file);
-}
+//     fclose(file);
+// }
 
-void getControle(char *controle){
-    FILE *file;
-    file = fopen("/home/gabriel/Documentos/redes-1/controle.txt","r");
-    fscanf(file, "%s", controle);
-    fclose(file);
-}
+// void getControle(char *controle){
+//     FILE *file;
+//     file = fopen("/home/gabriel/Documentos/redes-1/controle.txt","r");
+//     fscanf(file, "%s", controle);
+//     fclose(file);
+// }
