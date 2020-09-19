@@ -225,6 +225,18 @@ int main(void) {
                     unsigned char data[15];
                     char linha_aux[1000];
                     if((file = fopen(message_recv.data,"r")) == NULL){
+                        if (errno == 1){ //Detecta NÃO PERMITIDO
+                            for (int i = 0; i < 15; i++)
+                                data[i] = NULL;
+                            data[0] = '1';
+                        }
+                        if (errno == 2){ //Detecta NÃO EXISTENTE
+                            for (int i = 0; i < 15; i++)
+                                data[i] = NULL;
+                            data[0] = '2';
+                        }
+                        setMessage(&message_send, '~' , 1, 0, 15, data);
+                        send(socket, &message_send, sizeof(message_send), 0);
                         goto origem;
                     }
                     else
@@ -267,7 +279,7 @@ int main(void) {
                                         printMsg(&message_send);
                                         jump4:
                                         if (send(socket, &message_send, sizeof(message_send), 0) == -1){ //ENVIANDO DADOS - 1011
-                                            printf("Erro ao enviar mensagem! \n");
+                                        printf("Erro ao enviar mensagem! \n");
                                             printf("Erro: %s \n", strerror(errno));
                                         }
                                         else

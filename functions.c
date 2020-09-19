@@ -262,13 +262,13 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
     int cont = 0;
     int n_lin = 1;
     struct timeval  tv1, tv2;
-    setMessage(msg, '~' , size, 0, 2, arg); 
+    setMessage(msg, '~' , size, 0, 2, arg);
+    jump:
     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
         printf("Erro ao enviar mensagem! \n");
         printf("Erro: %s \n", strerror(errno));
     }
-    else
-    {
+    else{
         gettimeofday(&tv1, NULL);
         printf("Mensagem enviada com sucesso! \n");
         printf("Aguardando resposta do Servidor! \n \n");
@@ -315,6 +315,19 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
                         send(socket, msg, sizeof(*msg), 0);
                     }
                     return;
+                }
+                if(msg_recv->type == 9){ //Recebendo NACK - 1001
+                    printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
+                    goto jump;
+                }
+                if(msg_recv->type == 15){ //ERRO 
+                    if (msg_recv->data[0] == '1'){
+                        printf("Você não tem permissão no servidor para acessar o arquivo: %s! \n \n", arg);
+                    }
+                    if (msg_recv->data[0] == '2'){
+                        printf("O arquivo '%s' não existe no servidor! \n \n", arg);
+                    }
+                    break;
                 }
             }
         }
