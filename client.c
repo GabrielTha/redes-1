@@ -47,6 +47,14 @@ int main(void) {
             ver(&message_send, &message_recv, command[1], socket);      
             // system("clear"); 
         }
+        else if(strcmp(command[0], "linha") == 0){
+            linha(&message_send, &message_recv, command[1], command[2], socket);      
+            // system("clear"); 
+        }
+        else if(strcmp(command[0], "linhas") == 0){
+            linhas(&message_send, &message_recv, command[1], command[2], command[3], socket);      
+            // system("clear"); 
+        }
         else if(strcmp(command[0], "lls") == 0){
             lls();
         }

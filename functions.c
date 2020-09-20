@@ -271,7 +271,7 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             if(msg_recv && msg_recv->marker == '~'){ 
-                if(msg_recv->type == 11){ //Recebendo DADOS - 1100
+                if(msg_recv->type == 12){ //Recebendo DADOS - 1100
                     // if (checkParity(msg_recv) == 1 && msg_recv->seq == seq){
                     if (checkParity(msg_recv) == 1){
                         cont++;
@@ -319,7 +319,7 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
                     if (msg_recv->data[0] == '1'){
                         printf("Você não tem permissão no servidor para acessar o arquivo: %s! \n \n", arg);
                     }
-                    if (msg_recv->data[0] == '2'){
+                    if (msg_recv->data[0] == '3'){
                         printf("O arquivo '%s' não existe no servidor! \n \n", arg);
                     }
                     break;
@@ -330,13 +330,234 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
     
 }
 
-char * concatena(char *s1, const char *s2) { 
-    const size_t a = strlen(s1); 
-    const size_t b = strlen(s2); 
-    const size_t size_ab = a + b + 1; 
-    s1 = realloc(s1, size_ab); 
-    memcpy(s1 + a, s2, b + 1); 
-    return s1; 
+void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
+    struct node{
+        char nData[15];
+        struct node *pLink;
+    };
+    int size = strlen(arg);
+    int seq = 0;
+    char *str_all = (char *) malloc(1 * sizeof(char));
+    int cont = 0;
+    int n_lin = 1;
+    struct timeval  tv1, tv2;
+    setMessage(msg, '~' , size, 0, 3, arg);
+    jump:
+    if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
+        printf("Erro ao enviar mensagem! \n");
+        printf("Erro: %s \n", strerror(errno));
+    }
+    else{
+        gettimeofday(&tv1, NULL);
+        printf("Mensagem enviada com sucesso! \n");
+        printf("Aguardando resposta do Servidor! \n \n");
+        while (1){
+            recv(socket, msg_recv, sizeof(*msg_recv), 0);
+            recv(socket, msg_recv, sizeof(*msg_recv), 0);
+            if(msg_recv && msg_recv->marker == '~'){ 
+                if(msg_recv->type == 15){ //ERRO 
+                        if (msg_recv->data[0] == '1'){
+                            printf("Você não tem permissão no servidor para acessar o arquivo: %s! \n \n", arg);
+                        }
+                        if (msg_recv->data[0] == '3'){
+                            printf("O arquivo '%s' não existe no servidor! \n \n", arg);
+                        }
+                        return;
+                    }
+                if(msg_recv->type == 9){ //Recebendo NACK - 1001
+                    printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
+                    goto jump;
+                }
+                if (msg_recv->type == 8){ //Recebendo ACK - 1000
+                    setMessage(msg, '~' , size, 0, 10, arg2);
+                    jump2:
+                    if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA LINHA - 1010
+                        printf("Erro ao enviar mensagem! \n");
+                        printf("Erro: %s \n", strerror(errno));
+                    }
+                    else{
+                        gettimeofday(&tv1, NULL);
+                        printf("Mensagem enviada com sucesso! \n");
+                        printf("Aguardando resposta do Servidor! \n \n");
+                        while(1){ //ESPERANDO RESPOSTA DO SERVIDOR SOBRE O COMANDO INICIAL (DADOS, NACK ou ERRO)
+                            recv(socket, msg_recv, sizeof(*msg_recv), 0);
+                            recv(socket, msg_recv, sizeof(*msg_recv), 0);
+                            if(msg_recv && msg_recv->marker == '~'){ 
+                                if(msg_recv->type == 12){ //Recebendo DADOS - 1100
+                                    if (checkParity(msg_recv) == 1){
+                                        cont++;
+                                        str_all = (char *) realloc(str_all, (cont*15*8));
+                                        strcat(str_all, msg_recv->data);
+                                        // printMsg(msg_recv);
+                                        char str_aux[15];
+                                        strcpy(str_aux, msg_recv->data);
+                                        // str_aux[strlen(str_aux)]='\0';
+                                        // printf("%s", str_aux);
+                                        if(strstr(str_aux, "\a") != 0){
+                                            str_all[strcspn(str_all, "\a")] = 0;
+                                            // printf("%d - %s", n_lin, str_all);
+                                            printf("%s", str_all);
+                                            n_lin++;
+                                            cont = 0;
+                                            free(str_all);
+                                            str_all = (char *) malloc(1 * sizeof(char));
+                                            memset(str_all,NULL,sizeof(str_all));
+                                        }
+                                        setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
+                                        send(socket, msg, sizeof(*msg), 0);
+                                    }
+                                    else{
+                                        setMessage(msg, '~' , 0, 0, 9, 0); //Enviando NACK
+                                        send(socket, msg, sizeof(*msg), 0);
+                                    }
+                                }
+                                if (msg_recv->type == 13){ //FIM DE TRANSMISSÃO - 1101
+                                    if (checkParity(msg_recv) == 1){
+                                        setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
+                                        send(socket, msg, sizeof(*msg), 0);
+                                    }
+                                    else{
+                                        setMessage(msg, '~' , 0, 0, 9, 0); //Enviando NACK
+                                        send(socket, msg, sizeof(*msg), 0);
+                                    }
+                                    return;
+                                }
+                                if(msg_recv->type == 9){ //Recebendo NACK - 1001
+                                    printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
+                                    goto jump2;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+            }
+        }
+        
+
+
+
+
+
+
+        
+    }
+    
+}
+
+void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, int socket){
+    struct node{
+        char nData[15];
+        struct node *pLink;
+    };
+    int size = strlen(arg);
+    int seq = 0;
+    char *str_all = (char *) malloc(1 * sizeof(char));
+    int cont = 0;
+    int n_lin = 1;
+    struct timeval  tv1, tv2;
+    setMessage(msg, '~' , size, 0, 3, arg);
+    jump:
+    if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
+        printf("Erro ao enviar mensagem! \n");
+        printf("Erro: %s \n", strerror(errno));
+    }
+    else{
+        gettimeofday(&tv1, NULL);
+        printf("Mensagem enviada com sucesso! \n");
+        printf("Aguardando resposta do Servidor! \n \n");
+        while (1){
+            recv(socket, msg_recv, sizeof(*msg_recv), 0);
+            recv(socket, msg_recv, sizeof(*msg_recv), 0);
+            if(msg_recv && msg_recv->marker == '~'){ 
+                if(msg_recv->type == 15){ //ERRO 
+                        if (msg_recv->data[0] == '1'){
+                            printf("Você não tem permissão no servidor para acessar o arquivo: %s! \n \n", arg);
+                        }
+                        if (msg_recv->data[0] == '3'){
+                            printf("O arquivo '%s' não existe no servidor! \n \n", arg);
+                        }
+                        return;
+                    }
+                if(msg_recv->type == 9){ //Recebendo NACK - 1001
+                    printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
+                    goto jump;
+                }
+                if (msg_recv->type == 8){ //Recebendo ACK - 1000
+                    setMessage(msg, '~' , size, 0, 10, arg2);
+                    jump2:
+                    if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA LINHA - 1010
+                        printf("Erro ao enviar mensagem! \n");
+                        printf("Erro: %s \n", strerror(errno));
+                    }
+                    else{
+                        gettimeofday(&tv1, NULL);
+                        printf("Mensagem enviada com sucesso! \n");
+                        printf("Aguardando resposta do Servidor! \n \n");
+                        while(1){ //ESPERANDO RESPOSTA DO SERVIDOR SOBRE O COMANDO INICIAL (DADOS, NACK ou ERRO)
+                            recv(socket, msg_recv, sizeof(*msg_recv), 0);
+                            recv(socket, msg_recv, sizeof(*msg_recv), 0);
+                            if(msg_recv && msg_recv->marker == '~'){ 
+                                if(msg_recv->type == 12){ //Recebendo DADOS - 1100
+                                    if (checkParity(msg_recv) == 1){
+                                        cont++;
+                                        str_all = (char *) realloc(str_all, (cont*15*8));
+                                        strcat(str_all, msg_recv->data);
+                                        // printMsg(msg_recv);
+                                        char str_aux[15];
+                                        strcpy(str_aux, msg_recv->data);
+                                        // str_aux[strlen(str_aux)]='\0';
+                                        // printf("%s", str_aux);
+                                        if(strstr(str_aux, "\a") != 0){
+                                            str_all[strcspn(str_all, "\a")] = 0;
+                                            // printf("%d - %s", n_lin, str_all);
+                                            printf("%s", str_all);
+                                            n_lin++;
+                                            cont = 0;
+                                            free(str_all);
+                                            str_all = (char *) malloc(1 * sizeof(char));
+                                            memset(str_all,NULL,sizeof(str_all));
+                                        }
+                                        setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
+                                        send(socket, msg, sizeof(*msg), 0);
+                                    }
+                                    else{
+                                        setMessage(msg, '~' , 0, 0, 9, 0); //Enviando NACK
+                                        send(socket, msg, sizeof(*msg), 0);
+                                    }
+                                }
+                                if (msg_recv->type == 13){ //FIM DE TRANSMISSÃO - 1101
+                                    if (checkParity(msg_recv) == 1){
+                                        setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
+                                        send(socket, msg, sizeof(*msg), 0);
+                                    }
+                                    else{
+                                        setMessage(msg, '~' , 0, 0, 9, 0); //Enviando NACK
+                                        send(socket, msg, sizeof(*msg), 0);
+                                    }
+                                    return;
+                                }
+                                if(msg_recv->type == 9){ //Recebendo NACK - 1001
+                                    printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
+                                    goto jump2;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+            }
+        }
+        
+
+
+
+
+
+
+        
+    }
+    
 }
 
 // void setControleCliente(){
