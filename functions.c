@@ -258,6 +258,7 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
     int cont = 0;
     int n_lin = 1;
     struct timeval  tv1, tv2;
+    double tDecorrido;
     setMessage(msg, '~' , size, 0, 2, arg);
     jump:
     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
@@ -326,6 +327,12 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
                     break;
                 }
             }
+            gettimeofday(&tv2, NULL);
+            tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
+            if (tDecorrido > 12){
+                printf("Time Out \n \n \n");
+                goto jump;
+            }
         }
     }
     
@@ -343,6 +350,7 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
     int cont = 0;
     int n_lin = 1;
     struct timeval  tv1, tv2;
+    double tDecorrido;
     setMessage(msg, '~' , size, 0, 3, arg);
     jump:
     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
@@ -434,6 +442,12 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
                     }
                 }
             }
+            gettimeofday(&tv2, NULL);
+            tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
+            if (tDecorrido > 12){
+                printf("Time Out \n \n \n");
+                goto jump;
+            }
         }
     }
 }
@@ -451,6 +465,7 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
     int n_lin = 1;
     char linhas[100];
     struct timeval  tv1, tv2;
+    double tDecorrido;
     setMessage(msg, '~' , size, 0, 4, arg);
     jump:
     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
@@ -544,6 +559,196 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
                     }
                 }
                 
+            }
+            tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
+            if (tDecorrido > 12){
+                printf("Time Out \n \n \n");
+                goto jump;
+            }
+        }
+    }
+}
+
+void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, int socket){
+    struct node{
+        char nData[15];
+        struct node *pLink;
+    };
+    int size = strlen(arg);
+    int seq = 0;
+    char *str_all = (char *) malloc(1 * sizeof(char));
+    memset(str_all,NULL,sizeof(str_all));
+    int cont = 0;
+    int n_lin = 1;
+    unsigned char data[15];
+    struct timeval  tv1, tv2;
+    double tDecorrido;
+    int tam_strings = 0; 
+    int tam_strings_aux = 0; 
+    int tam_ctrl = 0;
+    int n_msgs = 0;
+    int n_msgs_ctr = 0;
+    setMessage(msg, '~' , size, 0, 5, arg);
+    jump:
+    if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
+        printf("Erro ao enviar mensagem! \n");
+        printf("Erro: %s \n", strerror(errno));
+    }
+    else{
+        gettimeofday(&tv1, NULL);
+        printf("Mensagem enviada com sucesso! \n");
+        printf("Aguardando resposta do Servidor! \n \n");
+        while (1){
+            recv(socket, msg_recv, sizeof(*msg_recv), 0);
+            recv(socket, msg_recv, sizeof(*msg_recv), 0);
+            if(msg_recv && msg_recv->marker == '~'){ 
+                if(msg_recv->type == 15){ //ERRO 
+                        if (msg_recv->data[0] == '1'){
+                            printf("Você não tem permissão no servidor para acessar o arquivo: %s! \n \n", arg);
+                        }
+                        if (msg_recv->data[0] == '3'){
+                            printf("O arquivo '%s' não existe no servidor! \n \n", arg);
+                        }
+                        return;
+                    }
+                if(msg_recv->type == 9){ //Recebendo NACK - 1001
+                    printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
+                    goto jump;
+                }
+                if (msg_recv->type == 8){ //Recebendo ACK - 1000
+                    setMessage(msg, '~' , size, 0, 10, arg2);
+                    jump2:
+                    if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA LINHA - 1010
+                        printf("Erro ao enviar mensagem! \n");
+                        printf("Erro: %s \n", strerror(errno));
+                    }
+                    else{
+                        gettimeofday(&tv1, NULL);
+                        printf("Mensagem enviada com sucesso! \n");
+                        printf("Aguardando resposta do Servidor! \n \n");
+                        while(1){ 
+                            recv(socket, msg_recv, sizeof(*msg_recv), 0);
+                            recv(socket, msg_recv, sizeof(*msg_recv), 0);
+                            if(msg_recv && msg_recv->marker == '~'){ 
+                                if(msg_recv->type == 15){ //ERRO 
+                                        return;
+                                    }
+                                if(msg_recv->type == 9){ //Recebendo NACK - 1001
+                                    printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
+                                    goto jump2;
+                                }
+                                if (msg_recv->type == 8){ //Recebendo ACK - 1000
+                                    printf("%s", arg3);
+
+
+                                    tam_strings = strlen(arg3);
+                                    n_msgs =  round(tam_strings / 14);
+                                    tam_ctrl = tam_strings;
+                                    tam_strings_aux = tam_strings;
+                                    n_msgs_ctr = n_msgs_ctr;
+                                    // printf("STRING: %s\n", linha);
+                                    // printf("TAMANHO DA STRING: %d\n", tam_strings);
+                                    // printf("NUMERO DE MSG: %d\n", n_msgs);
+                                    for (int z = 0; z <= n_msgs; z++){
+                                        for (int i = 0; i < 15; i++)
+                                            data[i] = 0;
+                                        for (int i = 0; i < 14; i++){
+                                            data[i] = arg3[tam_strings_aux - tam_ctrl];
+                                            tam_ctrl--;
+                                        }
+                                        data[15]= '\0';
+                                        if (tam_strings >= 15){
+                                            setMessage(msg, '~' , 15, z, 12, data); 
+                                        }
+                                        else{
+                                            setMessage(msg, '~' , tam_strings, z, 12, data); 
+                                        }
+                                        // printMsg(&message_send);
+                                        jump15:
+                                        if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIANDO DADOS - 1011
+                                        printf("Erro ao enviar mensagem! \n");
+                                            printf("Erro: %s \n", strerror(errno));
+                                        }
+                                        else
+                                        {
+                                            gettimeofday(&tv1, NULL);
+                                            while(1){
+                                                    recv(socket, msg_recv, sizeof(*msg_recv), 0);
+                                                    recv(socket, msg_recv, sizeof(*msg_recv), 0);
+                                                    if(msg_recv && msg_recv->marker == '~'){ 
+                                                        //setControleServidor();
+                                                        if(msg_recv->type == 8){
+                                                            break;
+                                                        }
+                                                        if(msg_recv->type == 9){
+                                                            printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n");
+                                                            goto jump15;
+                                                        }
+                                                    }
+                                                gettimeofday(&tv2, NULL);
+                                                tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
+                                                if (tDecorrido > 12){
+                                                    printf("Time Out \n \n \n");
+                                                    goto jump15;
+                                                }
+                                            }
+                                        }
+                                        n_msgs_ctr--;
+                                        tam_strings -= 14;
+                                    }
+
+
+                                    // Lógica de enviar arg3 particionado
+
+                                    
+                                    setMessage(msg, '~' , 0, 0, 13, data); 
+                                    // printMsg(&message_send); 
+                                    jump11:
+                                    if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIAR FIM DE TRANSMISSÃO - 1101
+                                        printf("Erro ao enviar mensagem! \n");
+                                        printf("Erro: %s \n", strerror(errno));
+                                    }
+                                    else
+                                    {
+                                        gettimeofday(&tv1, NULL);
+                                        while(1){
+                                                recv(socket, msg, sizeof(*msg), 0);
+                                                recv(socket, msg, sizeof(*msg), 0);
+                                                if(msg && msg->marker == '~'){ 
+                                                    //setControleServidor();
+                                                    if(msg->type == 8){
+                                                        printf("Recebeu ACK do LS \n \n \n");
+                                                        return;
+                                                    }
+                                                    if(msg->type == 9){
+                                                        printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n");
+                                                        goto jump11;
+                                                    }
+                                                }
+                                            gettimeofday(&tv2, NULL);
+                                            tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
+                                            if (tDecorrido > 12){
+                                                printf("Time Out \n \n \n");
+                                                goto jump11;
+                                            }
+                                        }
+                                    }
+
+                                }
+                            }
+                            tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
+                            if (tDecorrido > 12){
+                                printf("Time Out \n \n \n");
+                                goto jump2;
+                            }
+                        }
+                    }
+                }
+            }
+            tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
+            if (tDecorrido > 12){
+                printf("Time Out \n \n \n");
+                goto jump;
             }
         }
     }

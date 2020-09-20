@@ -48,11 +48,15 @@ int main(void) {
             // system("clear"); 
         }
         else if(strcmp(command[0], "linha") == 0){
-            linha(&message_send, &message_recv, command[1], command[2], socket);      
+            linha(&message_send, &message_recv, command[2], command[1], socket);      
             // system("clear"); 
         }
         else if(strcmp(command[0], "linhas") == 0){
-            linhas(&message_send, &message_recv, command[1], command[2], command[3], socket);      
+            linhas(&message_send, &message_recv, command[3], command[1], command[2], socket);      
+            // system("clear"); 
+        }
+        else if(strcmp(command[0], "edit") == 0){
+            edit(&message_send, &message_recv, command[2], command[1], command[3], socket);      
             // system("clear"); 
         }
         else if(strcmp(command[0], "lls") == 0){
@@ -60,12 +64,6 @@ int main(void) {
         }
         else if(strcmp(command[0], "lcd") == 0){
             lcd(command[1]);
-        }
-        else if(strcmp(command[0], "lcd") == 0){
-            chdir(command[1]); 
-        
-            printf("%s\n", getcwd(s, 100)); 
-            break;
         }
         else{
             printf("Comando inválido!");
