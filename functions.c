@@ -254,6 +254,7 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
     int size = strlen(arg);
     int seq = 0;
     char *str_all = (char *) malloc(1 * sizeof(char));
+    memset(str_all,NULL,sizeof(str_all));
     int cont = 0;
     int n_lin = 1;
     struct timeval  tv1, tv2;
@@ -304,12 +305,12 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
                     if (checkParity(msg_recv) == 1){
                         setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
                         send(socket, msg, sizeof(*msg), 0);
+                        return;
                     }
                     else{
                         setMessage(msg, '~' , 0, 0, 9, 0); //Enviando NACK
                         send(socket, msg, sizeof(*msg), 0);
                     }
-                    return;
                 }
                 if(msg_recv->type == 9){ //Recebendo NACK - 1001
                     printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
@@ -338,6 +339,7 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
     int size = strlen(arg);
     int seq = 0;
     char *str_all = (char *) malloc(1 * sizeof(char));
+    memset(str_all,NULL,sizeof(str_all));
     int cont = 0;
     int n_lin = 1;
     struct timeval  tv1, tv2;
@@ -415,12 +417,13 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
                                     if (checkParity(msg_recv) == 1){
                                         setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
                                         send(socket, msg, sizeof(*msg), 0);
+                                        return;
                                     }
                                     else{
                                         setMessage(msg, '~' , 0, 0, 9, 0); //Enviando NACK
                                         send(socket, msg, sizeof(*msg), 0);
                                     }
-                                    return;
+                                    
                                 }
                                 if(msg_recv->type == 9){ //Recebendo NACK - 1001
                                     printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
@@ -430,19 +433,9 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
                         }
                     }
                 }
-                
             }
         }
-        
-
-
-
-
-
-
-        
     }
-    
 }
 
 void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, int socket){
@@ -453,10 +446,12 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
     int size = strlen(arg);
     int seq = 0;
     char *str_all = (char *) malloc(1 * sizeof(char));
+    memset(str_all,NULL,sizeof(str_all));
     int cont = 0;
     int n_lin = 1;
+    char linhas[100];
     struct timeval  tv1, tv2;
-    setMessage(msg, '~' , size, 0, 3, arg);
+    setMessage(msg, '~' , size, 0, 4, arg);
     jump:
     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
         printf("Erro ao enviar mensagem! \n");
@@ -465,7 +460,7 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
     else{
         gettimeofday(&tv1, NULL);
         printf("Mensagem enviada com sucesso! \n");
-        printf("Aguardando resposta do Servidor! \n \n");
+        printf("Aguardando resposta do Servidor! 000000 \n \n");
         while (1){
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -484,6 +479,8 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
                     goto jump;
                 }
                 if (msg_recv->type == 8){ //Recebendo ACK - 1000
+                    strcat(arg2, "|");
+                    strcat(arg2, arg3);
                     setMessage(msg, '~' , size, 0, 10, arg2);
                     jump2:
                     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA LINHA - 1010
@@ -530,12 +527,13 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
                                     if (checkParity(msg_recv) == 1){
                                         setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
                                         send(socket, msg, sizeof(*msg), 0);
+                                        return;
                                     }
                                     else{
                                         setMessage(msg, '~' , 0, 0, 9, 0); //Enviando NACK
                                         send(socket, msg, sizeof(*msg), 0);
                                     }
-                                    return;
+                                    
                                 }
                                 if(msg_recv->type == 9){ //Recebendo NACK - 1001
                                     printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
@@ -548,16 +546,7 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
                 
             }
         }
-        
-
-
-
-
-
-
-        
     }
-    
 }
 
 // void setControleCliente(){
