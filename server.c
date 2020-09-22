@@ -282,7 +282,6 @@ int main(void) {
                                             setMessage(&message_send, '~' , tam_strings, (num_seq % 256), 12, data); 
                                         }
                                         jump4:
-                                        printMsg(&message_send);
                                         if (send(socket, &message_send, sizeof(message_send), 0) == -1){ //ENVIANDO DADOS - 1011
                                             printf("Erro ao enviar mensagem! \n");
                                             printf("Erro: %s \n", strerror(errno));

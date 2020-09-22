@@ -494,8 +494,6 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
     }
     else{
         gettimeofday(&tv1, NULL);
-        printf("Mensagem enviada com sucesso! \n");
-        printf("Aguardando resposta do Servidor! 000000 \n \n");
         while (1){
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -664,9 +662,6 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
                                     goto jump2;
                                 }
                                 if (msg_recv->type == 8){ //Recebendo ACK - 1000
-                                    printf("%s", arg3);
-
-
                                     tam_strings = strlen(arg3);
                                     n_msgs =  round(tam_strings / 14);
                                     tam_ctrl = tam_strings;
