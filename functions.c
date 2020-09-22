@@ -125,7 +125,7 @@ void cd(Message *msg, Message *msg_recv, char *arg, int socket){
                 if(msg_recv && msg_recv->marker == '~'){ 
                     // setControleCliente();
                     if(msg_recv->type == 8){ //ACK
-                        printf("Recebeu ACK do CD \n \n \n");
+                        printf("Sucesso - Fim do comando CD! \n \n \n");
                         break;
                     }
                     if(msg_recv->type == 9){ //NACK
@@ -141,10 +141,6 @@ void cd(Message *msg, Message *msg_recv, char *arg, int socket){
                         }
                         break;
                     }
-                    // if(msg_recv == msg){
-                    //     printf("Mensagem ignorada! ACK do CD \n \n \n");
-                    //     break;
-                    // }
                 }
             gettimeofday(&tv2, NULL);
             tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
@@ -161,6 +157,7 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
     Message msg_aux;
     struct timeval  tv1, tv2;
     int seq = 0;
+    int num_seq = 0;
     char *ls_full;
     double tDecorrido;
     int tam_strings = 0; 
@@ -175,6 +172,7 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
         return;
     }
     setMessage(msg, '~' , size, 0, 1, arg); 
+    num_seq++;
     jump:
     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
         printf("Erro ao enviar mensagem! \n");
@@ -189,7 +187,7 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             if(msg_recv && msg_recv->marker == '~'){ 
                 if (msg_recv->type == 13){ //FIM DE TRANSMISSÃO - 1101
-                    if (checkParity(msg_recv) == 1 && msg_recv->seq == seq){
+                    if (checkParity(msg_recv) == 1 && msg_recv->seq == (num_seq % 256)){
                         ls_full = (char *)malloc(tam_strings+1 * sizeof(char));
                         memset(ls_full,NULL,sizeof(ls_full));
                         for (int k = 0; k < i; k++)
@@ -212,7 +210,8 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
                     return;
                 }
                 if(msg_recv->type == 11){ //Recebendo DADOS - 1011
-                    if (checkParity(msg_recv) == 1 && msg_recv->seq == seq){
+                    if (checkParity(msg_recv) == 1 && msg_recv->seq == (num_seq % 256)){
+                        num_seq++;
                         for (int x = 0; x < 15; x++){
                             ls[i][x] = msg_recv->data[x];
                         }
@@ -253,6 +252,8 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
     };
     int size = strlen(arg);
     int seq = 0;
+    int aux = 0;
+    long int num_seq = 0;
     char *str_all = (char *) malloc(1 * sizeof(char));
     memset(str_all,NULL,sizeof(str_all));
     int cont = 0;
@@ -260,6 +261,7 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
     struct timeval  tv1, tv2;
     double tDecorrido;
     setMessage(msg, '~' , size, 0, 2, arg);
+    num_seq++;
     jump:
     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
         printf("Erro ao enviar mensagem! \n");
@@ -274,8 +276,13 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             if(msg_recv && msg_recv->marker == '~'){ 
                 if(msg_recv->type == 12){ //Recebendo DADOS - 1100
-                    // if (checkParity(msg_recv) == 1 && msg_recv->seq == seq){
-                    if (checkParity(msg_recv) == 1){
+                    if (checkParity(msg_recv) == 1 && msg_recv->seq == (num_seq % 256)){
+                        aux = 1;
+                        // printMsg(msg_recv);
+                        // printf("%d\n", (num_seq % 256));
+                        num_seq++;
+                        sleep(0.05);
+                        // printf("%d\n", (num_seq % 256));
                         cont++;
                         str_all = (char *) realloc(str_all, (cont*15*8));
                         strcat(str_all, msg_recv->data);
@@ -298,23 +305,30 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
                         send(socket, msg, sizeof(*msg), 0);
                     }
                     else{
+                        printMsg(msg_recv);
+                        printf("%d", (num_seq % 256));
                         setMessage(msg, '~' , 0, 0, 9, 0); //Enviando NACK
                         send(socket, msg, sizeof(*msg), 0);
                     }
                 }
                 if (msg_recv->type == 13){ //FIM DE TRANSMISSÃO - 1101
-                    if (checkParity(msg_recv) == 1){
+                    if (checkParity(msg_recv) == 1 && msg_recv->seq == (num_seq % 256)){
                         setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
                         send(socket, msg, sizeof(*msg), 0);
                         return;
                     }
                     else{
+                        printMsg(msg_recv);
+                        printf("%d", (num_seq % 256));
                         setMessage(msg, '~' , 0, 0, 9, 0); //Enviando NACK
                         send(socket, msg, sizeof(*msg), 0);
                     }
                 }
-                if(msg_recv->type == 9){ //Recebendo NACK - 1001
-                    printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
+                if(msg_recv->type == 9 && aux == 0){ //Recebendo NACK - 1001
+                    printMsg(msg_recv);
+                    printf("%d", (num_seq % 256));
+                    return;
+                    printf("Recebeu NACK do VER \n Reenviando mensagem!\n \n"); 
                     goto jump;
                 }
                 if(msg_recv->type == 15){ //ERRO 
@@ -329,7 +343,7 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
             }
             gettimeofday(&tv2, NULL);
             tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
-            if (tDecorrido > 12){
+            if (tDecorrido > 12 && aux == 0){
                 printf("Time Out \n \n \n");
                 goto jump;
             }
@@ -345,13 +359,15 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
     };
     int size = strlen(arg);
     int seq = 0;
+    int num_seq = 0;
     char *str_all = (char *) malloc(1 * sizeof(char));
     memset(str_all,NULL,sizeof(str_all));
     int cont = 0;
     int n_lin = 1;
-    struct timeval  tv1, tv2;
+    struct timeval  tv1, tv3;
     double tDecorrido;
     setMessage(msg, '~' , size, 0, 3, arg);
+    num_seq++;
     jump:
     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
         printf("Erro ao enviar mensagem! \n");
@@ -375,11 +391,12 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
                         return;
                     }
                 if(msg_recv->type == 9){ //Recebendo NACK - 1001
-                    printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
+                    printf("Recebeu NACK do LINHA \n Reenviando mensagem!\n \n"); 
                     goto jump;
                 }
                 if (msg_recv->type == 8){ //Recebendo ACK - 1000
-                    setMessage(msg, '~' , size, 0, 10, arg2);
+                    setMessage(msg, '~' , size, num_seq, 10, arg2);
+                    num_seq++;
                     jump2:
                     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA LINHA - 1010
                         printf("Erro ao enviar mensagem! \n");
@@ -394,7 +411,8 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
                             recv(socket, msg_recv, sizeof(*msg_recv), 0);
                             if(msg_recv && msg_recv->marker == '~'){ 
                                 if(msg_recv->type == 12){ //Recebendo DADOS - 1100
-                                    if (checkParity(msg_recv) == 1){
+                                    if (checkParity(msg_recv) == 1 && msg_recv->seq == num_seq){
+                                        num_seq++;
                                         cont++;
                                         str_all = (char *) realloc(str_all, (cont*15*8));
                                         strcat(str_all, msg_recv->data);
@@ -422,7 +440,7 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
                                     }
                                 }
                                 if (msg_recv->type == 13){ //FIM DE TRANSMISSÃO - 1101
-                                    if (checkParity(msg_recv) == 1){
+                                    if (checkParity(msg_recv) == 1 && msg_recv->seq == num_seq){
                                         setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
                                         send(socket, msg, sizeof(*msg), 0);
                                         return;
@@ -434,7 +452,7 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
                                     
                                 }
                                 if(msg_recv->type == 9){ //Recebendo NACK - 1001
-                                    printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
+                                    printf("Recebeu NACK do LINHA \n Reenviando mensagem!\n \n"); 
                                     goto jump2;
                                 }
                             }
@@ -442,8 +460,8 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
                     }
                 }
             }
-            gettimeofday(&tv2, NULL);
-            tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
+            gettimeofday(&tv3, NULL);
+            tDecorrido = ((double) (tv3.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv3.tv_sec - tv1.tv_sec));
             if (tDecorrido > 12){
                 printf("Time Out \n \n \n");
                 goto jump;
@@ -459,6 +477,7 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
     };
     int size = strlen(arg);
     int seq = 0;
+    int num_seq = 0;
     char *str_all = (char *) malloc(1 * sizeof(char));
     memset(str_all,NULL,sizeof(str_all));
     int cont = 0;
@@ -467,6 +486,7 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
     struct timeval  tv1, tv2;
     double tDecorrido;
     setMessage(msg, '~' , size, 0, 4, arg);
+    num_seq++;
     jump:
     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
         printf("Erro ao enviar mensagem! \n");
@@ -496,7 +516,8 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
                 if (msg_recv->type == 8){ //Recebendo ACK - 1000
                     strcat(arg2, "|");
                     strcat(arg2, arg3);
-                    setMessage(msg, '~' , size, 0, 10, arg2);
+                    setMessage(msg, '~' , size, num_seq, 10, arg2);
+                    num_seq++;
                     jump2:
                     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA LINHA - 1010
                         printf("Erro ao enviar mensagem! \n");
@@ -511,7 +532,8 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
                             recv(socket, msg_recv, sizeof(*msg_recv), 0);
                             if(msg_recv && msg_recv->marker == '~'){ 
                                 if(msg_recv->type == 12){ //Recebendo DADOS - 1100
-                                    if (checkParity(msg_recv) == 1){
+                                    if (checkParity(msg_recv) == 1 && msg_recv->seq == (num_seq % 256)){
+                                        num_seq++;
                                         cont++;
                                         str_all = (char *) realloc(str_all, (cont*15*8));
                                         strcat(str_all, msg_recv->data);
@@ -539,7 +561,8 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
                                     }
                                 }
                                 if (msg_recv->type == 13){ //FIM DE TRANSMISSÃO - 1101
-                                    if (checkParity(msg_recv) == 1){
+                                    if (checkParity(msg_recv) == 1 && msg_recv->seq == (num_seq % 256)){
+                                        num_seq++;
                                         setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
                                         send(socket, msg, sizeof(*msg), 0);
                                         return;
@@ -560,6 +583,7 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
                 }
                 
             }
+            gettimeofday(&tv2, NULL);
             tDecorrido = ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec));
             if (tDecorrido > 12){
                 printf("Time Out \n \n \n");
@@ -576,6 +600,7 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
     };
     int size = strlen(arg);
     int seq = 0;
+    long int num_seq = 0;
     char *str_all = (char *) malloc(1 * sizeof(char));
     memset(str_all,NULL,sizeof(str_all));
     int cont = 0;
@@ -589,6 +614,7 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
     int n_msgs = 0;
     int n_msgs_ctr = 0;
     setMessage(msg, '~' , size, 0, 5, arg);
+    num_seq++;
     jump:
     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA COMANDO INICIAL - 0001
         printf("Erro ao enviar mensagem! \n");
@@ -616,7 +642,7 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
                     goto jump;
                 }
                 if (msg_recv->type == 8){ //Recebendo ACK - 1000
-                    setMessage(msg, '~' , size, 0, 10, arg2);
+                    setMessage(msg, '~' , size, (num_seq % 256), 10, arg2);
                     jump2:
                     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIA LINHA - 1010
                         printf("Erro ao enviar mensagem! \n");
@@ -658,10 +684,12 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
                                         }
                                         data[15]= '\0';
                                         if (tam_strings >= 15){
-                                            setMessage(msg, '~' , 15, z, 12, data); 
+                                            num_seq++;
+                                            setMessage(msg, '~' , 15, (num_seq % 256), 12, data); 
                                         }
                                         else{
-                                            setMessage(msg, '~' , tam_strings, z, 12, data); 
+                                            num_seq++;
+                                            setMessage(msg, '~' , tam_strings, (num_seq % 256), 12, data); 
                                         }
                                         // printMsg(&message_send);
                                         jump15:
@@ -700,8 +728,8 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
 
                                     // Lógica de enviar arg3 particionado
 
-                                    
-                                    setMessage(msg, '~' , 0, 0, 13, data); 
+                                    num_seq++;
+                                    setMessage(msg, '~' , 0, num_seq, 13, data); 
                                     // printMsg(&message_send); 
                                     jump11:
                                     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIAR FIM DE TRANSMISSÃO - 1101
@@ -717,7 +745,7 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
                                                 if(msg && msg->marker == '~'){ 
                                                     //setControleServidor();
                                                     if(msg->type == 8){
-                                                        printf("Recebeu ACK do LS \n \n \n");
+                                                        printf("Recebeu ACK do VER \n \n \n");
                                                         return;
                                                     }
                                                     if(msg->type == 9){
@@ -771,7 +799,6 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
 //     if (file != NULL){
 //         fputs("Servidor", file);
 //     };
-
 //     fclose(file);
 // }
 
