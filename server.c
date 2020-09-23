@@ -809,6 +809,8 @@ int main(void) {
                     memset(str_all,NULL,sizeof(str_all));
                     int str_size = 1;
                     int aux,line=0,count=0;
+        printf("Mensagem enviada com sucesso! \n");
+        printf("Aguardando resposta do Servidor! \n \n");
                     char * pre_linha;
                     char buf[1000];
                     char ls[1000][1000];
@@ -872,6 +874,7 @@ int main(void) {
                                                         line_ok = 1;
                                                     }	
                                                 }
+                                        count = 0;
                                         fclose(file);
                                         if (line_ok == 0){ //ENVIA ERRO - LINHA NÃO EXISTENTE
                                             printf("LINHA INEXISTENTE");
@@ -920,7 +923,37 @@ int main(void) {
                                                         if (checkParity(&message_recv) == 1 && message_recv.seq == (num_seq % 256)){
                                                             setMessage(&message_send, '~' , 0, 0, 8, 0); //Enviando ACK
                                                             send(socket, &message_send, sizeof(message_send), 0);
+                                                            removeAspas(str_all);
+                                                            printf("%s \n \n \n", str_all);
+                                                            FILE *fp;
+                                                            file = fopen(nome_arq,"r");
+                                                            fp = fopen ("aux.txt", "w" );
 
+                                                            if ( !fp ) 
+                                                                exit (0);
+                                                            while(fgets(linha,sizeof(linha),file) != NULL)
+                                                            for(aux=0; linha[aux]; aux++) 
+                                                                if(linha[aux]=='\n'){
+                                                                    count++;
+                                                                    if (count == n_linha){
+                                                                        strcat(str_all, "\n");
+                                                                        fprintf(fp, str_all);
+                                                                    }
+                                                                    else{
+                                                                        fprintf(fp, linha);
+                                                                    }
+                                                                    	
+                                                                }
+                                                            fclose(file);
+                                                            fclose(fp);
+                                                            remove(nome_arq);
+
+                                                            if(rename("aux.txt", nome_arq) == 0) {
+                                                                printf("Arquivo %s renomeado para %s com sucesso!\n", "aux.txt", nome_arq);
+                                                            } else {
+                                                                fprintf("Não foi possível renomear o arquivo %s.", "aux.txt");
+                                                                return 1;
+                                                            }
 
                                                             //REALIZA A TROCA DO ARQUIVO COM A LINHA NOVA
                                                             printf("%s - %d - %s \n", nome_arq, n_linha, str_all);

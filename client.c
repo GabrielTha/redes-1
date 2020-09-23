@@ -5,6 +5,7 @@
 
 int main(void) {
     char command_line[100];
+    char command_line_aux[100];
     char clearBuf[256]; //JG:
     int socket = ConexaoRawSocket("lo");
     Message message_send;
@@ -18,6 +19,7 @@ int main(void) {
         showMenu();
         fgets(command_line, 100, stdin);
         strtok(command_line, "\n");
+        strcpy(command_line_aux, command_line);
         int i = 0;
         char s[2] = " ";
         char *token;
@@ -56,8 +58,21 @@ int main(void) {
             // system("clear"); 
         }
         else if(strcmp(command[0], "edit") == 0){
-            edit(&message_send, &message_recv, command[2], command[1], command[3], socket);      
+            char lin[100];
+            memset(lin,NULL,sizeof(lin));
+            token = strtok(command_line_aux, s);
+            token = strtok(NULL, s);
+            token = strtok(NULL, s);
+            token = strtok(NULL, s);
+            while( token != NULL ) {
+                strcat(lin, token);
+                strcat(lin, " ");
+                token = strtok(NULL, s);
+            }  
+
+            edit(&message_send, &message_recv, command[2], command[1], lin, socket);      
             // system("clear"); 
+            
         }
         else if(strcmp(command[0], "lls") == 0){
             lls();
