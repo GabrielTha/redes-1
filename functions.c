@@ -681,12 +681,10 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
                                         if (tam_strings >= 15){
                                             num_seq++;
                                             setMessage(msg, '~' , 15, (num_seq % 256), 12, data); 
-                                            printf("%s", data);
                                         }
                                         else{
                                             num_seq++;
                                             setMessage(msg, '~' , tam_strings, (num_seq % 256), 12, data); 
-                                            printf("%s", data);
                                         }
                                         // printMsg(&message_send);
                                         jump15:
@@ -782,13 +780,14 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
 void removeAspas(char *words){
     int i;
     int len = strlen(words);
-    words[len-1] = '\0';
+    printf("%d",len);
+    // words[len-1] = '\n';
     for(i = 1; i < len; i++)
     {
         words[i - 1] = words[i];
     }
     len--;
-    // strcat(words, '\n');
+    words[len-2] = '\0';
 }
 
 // void setControleCliente(){

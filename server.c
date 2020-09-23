@@ -809,8 +809,6 @@ int main(void) {
                     memset(str_all,NULL,sizeof(str_all));
                     int str_size = 1;
                     int aux,line=0,count=0;
-        printf("Mensagem enviada com sucesso! \n");
-        printf("Aguardando resposta do Servidor! \n \n");
                     char * pre_linha;
                     char buf[1000];
                     char ls[1000][1000];
@@ -924,7 +922,6 @@ int main(void) {
                                                             setMessage(&message_send, '~' , 0, 0, 8, 0); //Enviando ACK
                                                             send(socket, &message_send, sizeof(message_send), 0);
                                                             removeAspas(str_all);
-                                                            printf("%s \n \n \n", str_all);
                                                             FILE *fp;
                                                             file = fopen(nome_arq,"r");
                                                             fp = fopen ("aux.txt", "w" );
@@ -932,18 +929,18 @@ int main(void) {
                                                             if ( !fp ) 
                                                                 exit (0);
                                                             while(fgets(linha,sizeof(linha),file) != NULL)
-                                                            for(aux=0; linha[aux]; aux++) 
-                                                                if(linha[aux]=='\n'){
-                                                                    count++;
-                                                                    if (count == n_linha){
-                                                                        strcat(str_all, "\n");
-                                                                        fprintf(fp, str_all);
+                                                                for(aux=0; linha[aux]; aux++) 
+                                                                    if(linha[aux]=='\n'){
+                                                                        count++;
+                                                                        if (count == n_linha){
+                                                                            strcat(str_all, "\n");
+                                                                            fprintf(fp, str_all);
+                                                                        }
+                                                                        else{
+                                                                            fprintf(fp, linha);
+                                                                        }
+                                                                            
                                                                     }
-                                                                    else{
-                                                                        fprintf(fp, linha);
-                                                                    }
-                                                                    	
-                                                                }
                                                             fclose(file);
                                                             fclose(fp);
                                                             remove(nome_arq);
