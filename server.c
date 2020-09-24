@@ -18,8 +18,7 @@ int main(void) {
             recv(socket, &message_recv, sizeof(message_recv), 0);
             recv(socket, &message_recv, sizeof(message_recv), 0);
             if(&message_recv && message_recv.marker == '~'){ 
-                int t = checkParity(&message_recv);
-
+                // int t = checkParity(&message_recv);
                 if(checkParity(&message_recv) == 0 && message_recv.type != 8 && message_recv.type != 9){ //NACK - 1001 (Não envia Nack para Ack/Nack)
                     setMessage(&message_send, '~' , 0, 0, 9, 0);
                     send(socket, &message_send, sizeof(message_send), 0);
@@ -879,7 +878,6 @@ int main(void) {
                                             for (int i = 0; i < 15; i++)
                                                 data[i] = NULL;
                                             data[0] = '4';
-                                            printf("%s", data);
                                             setMessage(&message_send, '~' , 0, 0, 15, data);
                                             if (send(socket, &message_send, sizeof(message_send), 0) == -1){ //ENVIANDO DADOS - 1011
                                                 printf("Erro ao enviar mensagem! \n");
@@ -946,14 +944,12 @@ int main(void) {
                                                             remove(nome_arq);
 
                                                             if(rename("aux.txt", nome_arq) == 0) {
-                                                                printf("Arquivo %s renomeado para %s com sucesso!\n", "aux.txt", nome_arq);
                                                             } else {
                                                                 fprintf("Não foi possível renomear o arquivo %s.", "aux.txt");
                                                                 return 1;
                                                             }
 
                                                             //REALIZA A TROCA DO ARQUIVO COM A LINHA NOVA
-                                                            printf("%s - %d - %s \n", nome_arq, n_linha, str_all);
                                                             free(str_all);
                                                             str_all = (char *) malloc(1 * sizeof(char));
                                                             memset(str_all,NULL,sizeof(str_all));

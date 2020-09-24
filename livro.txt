@@ -5997,7 +5997,7 @@ THE DEAD FOES.--WIGLAF'S BITTER TAUNTS.
           He was able on earth not at all in the leader
        35 Life to retain, and nowise to alter
           The will of the Wielder; the World-Ruler's power[1]
-          Would govern the actions of each one of heroes,
+1234567891234097614067123409762340976123409761234097612340971623409126
 
 {Wiglaf is ready to excoriate them.}
 
@@ -6798,7 +6798,7 @@ unless you comply with paragraph 1.E.8 or 1.E.9.
 access to or distributing Project Gutenberg-tm electronic works provided
 that
 
-- You pay a royalty fee of 20% of the gross profits you derive from
+- You pay a royalty fee of 2022121421240f the gross profits you derive from
      the use of Project Gutenberg-tm works calculated using the method
      you already use to calculate your applicable taxes.  The fee is
      owed to the owner of the Project Gutenberg-tm trademark, but he
@@ -7002,4 +7002,4 @@ This Web site includes information about Project Gutenberg-tm,
 including how to make donations to the Project Gutenberg Literary
 Archive Foundation, how to help produce our new eBooks, and how to
 subscribe to our email newsletter to hear about new eBooks.
-------------------------------------------------------------
+--------------GABRIEL-------------------

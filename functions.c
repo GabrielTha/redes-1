@@ -117,8 +117,8 @@ void cd(Message *msg, Message *msg_recv, char *arg, int socket){
     else
     {
         gettimeofday(&tv1, NULL);
-        printf("Mensagem enviada com sucesso! \n");
-        printf("Aguardando resposta do Servidor! \n \n");
+        //printf("Mensagem enviada com sucesso! \n");
+        //printf("Aguardando resposta do Servidor! \n \n");
         while(1){
                 recv(socket, msg_recv, sizeof(*msg_recv), 0);
                 recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -180,8 +180,8 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
     }
     else{
         gettimeofday(&tv1, NULL);
-        printf("Mensagem enviada com sucesso! \n");
-        printf("Aguardando resposta do Servidor! \n \n");
+        //printf("Mensagem enviada com sucesso! \n");
+        //printf("Aguardando resposta do Servidor! \n \n");
         while(1){ //ESPERANDO RESPOSTA DO SERVIDOR SOBRE O COMANDO INICIAL (DADOS, NACK ou ERRO)
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -202,6 +202,7 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
                         }  
                         setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
                         send(socket, msg, sizeof(*msg), 0);
+                        printf("Sucesso - Fim do comando LS! \n \n \n");
                     }
                     else{
                         setMessage(msg, '~' , 0, 0, 9, 0); //Enviando NACK
@@ -227,7 +228,7 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
                     }
                 }
                 if(msg_recv->type == 9){ //Recebendo NACK - 1001
-                    printf("Recebeu NACK do CD \n Reenviando mensagem!\n \n"); 
+                    printf("Recebeu NACK do LS \n Reenviando mensagem!\n \n"); 
                     goto jump;
                 }
                 if(msg_recv->type == 15){ //Recebendo ERRO
@@ -269,8 +270,8 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
     }
     else{
         gettimeofday(&tv1, NULL);
-        printf("Mensagem enviada com sucesso! \n");
-        printf("Aguardando resposta do Servidor! \n \n");
+        //printf("Mensagem enviada com sucesso! \n");
+        //printf("Aguardando resposta do Servidor! \n \n");
         while(1){ //ESPERANDO RESPOSTA DO SERVIDOR SOBRE O COMANDO INICIAL (DADOS, NACK ou ERRO)
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -315,6 +316,7 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
                     if (checkParity(msg_recv) == 1 && msg_recv->seq == (num_seq % 256)){
                         setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
                         send(socket, msg, sizeof(*msg), 0);
+                        printf("Sucesso - Fim do comando ver! \n \n \n");
                         return;
                     }
                     else{
@@ -375,8 +377,8 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
     }
     else{
         gettimeofday(&tv1, NULL);
-        printf("Mensagem enviada com sucesso! \n");
-        printf("Aguardando resposta do Servidor! \n \n");
+        //printf("Mensagem enviada com sucesso! \n");
+        //printf("Aguardando resposta do Servidor! \n \n");
         while (1){
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -404,8 +406,8 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
                     }
                     else{
                         gettimeofday(&tv1, NULL);
-                        printf("Mensagem enviada com sucesso! \n");
-                        printf("Aguardando resposta do Servidor! \n \n");
+                        //printf("Mensagem enviada com sucesso! \n");
+                        //printf("Aguardando resposta do Servidor! \n \n");
                         while(1){ //ESPERANDO RESPOSTA DO SERVIDOR SOBRE O COMANDO INICIAL (DADOS, NACK ou ERRO)
                             recv(socket, msg_recv, sizeof(*msg_recv), 0);
                             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -443,6 +445,7 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
                                     if (checkParity(msg_recv) == 1 && msg_recv->seq == num_seq){
                                         setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
                                         send(socket, msg, sizeof(*msg), 0);
+                                        printf("Sucesso - Fim do comando LINHA! \n \n \n");
                                         return;
                                     }
                                     else{
@@ -523,8 +526,8 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
                     }
                     else{
                         gettimeofday(&tv1, NULL);
-                        printf("Mensagem enviada com sucesso! \n");
-                        printf("Aguardando resposta do Servidor! \n \n");
+                        //printf("Mensagem enviada com sucesso! \n");
+                        //printf("Aguardando resposta do Servidor! \n \n");
                         while(1){ //ESPERANDO RESPOSTA DO SERVIDOR SOBRE O COMANDO INICIAL (DADOS, NACK ou ERRO)
                             recv(socket, msg_recv, sizeof(*msg_recv), 0);
                             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -563,6 +566,7 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
                                         num_seq++;
                                         setMessage(msg, '~' , 0, 0, 8, 0); //Enviando ACK
                                         send(socket, msg, sizeof(*msg), 0);
+                                        printf("Sucesso - Fim do comando LINHAS! \n \n \n");
                                         return;
                                     }
                                     else{
@@ -620,8 +624,8 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
     }
     else{
         gettimeofday(&tv1, NULL);
-        printf("Mensagem enviada com sucesso! \n");
-        printf("Aguardando resposta do Servidor! \n \n");
+        //printf("Mensagem enviada com sucesso! \n");
+        //printf("Aguardando resposta do Servidor! \n \n");
         while (1){
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -648,8 +652,8 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
                     }
                     else{
                         gettimeofday(&tv1, NULL);
-                        printf("Mensagem enviada com sucesso! \n");
-                        printf("Aguardando resposta do Servidor! \n \n");
+                        //printf("Mensagem enviada com sucesso! \n");
+                        //printf("Aguardando resposta do Servidor! \n \n");
                         while(1){ 
                             recv(socket, msg_recv, sizeof(*msg_recv), 0);
                             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -699,7 +703,6 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
                                                     recv(socket, msg_recv, sizeof(*msg_recv), 0);
                                                     recv(socket, msg_recv, sizeof(*msg_recv), 0);
                                                     if(msg_recv && msg_recv->marker == '~'){ 
-                                                        //setControleServidor();
                                                         if(msg_recv->type == 8){
                                                             break;
                                                         }
@@ -738,9 +741,8 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
                                                 recv(socket, msg, sizeof(*msg), 0);
                                                 recv(socket, msg, sizeof(*msg), 0);
                                                 if(msg && msg->marker == '~'){ 
-                                                    //setControleServidor();
                                                     if(msg->type == 8){
-                                                        printf("Recebeu ACK do VER \n \n \n");
+                                                        printf("Sucesso - Fim do comando EDIT! \n \n \n");
                                                         return;
                                                     }
                                                     if(msg->type == 9){
@@ -789,30 +791,3 @@ void removeAspas(char *words){
     len--;
     words[len-2] = '\0';
 }
-
-// void setControleCliente(){
-//     //Seta quem esta na vez de escrever
-//     FILE *file;
-//     file = fopen("/home/gabriel/Documentos/redes-1/controle.txt","w");
-//     if (file != NULL){
-//         fputs("Cliente", file);
-//     };
-//     fclose(file);
-// }
-
-// void //setControleServidor(){
-//     //Seta quem esta na vez de escrever
-//     FILE *file;
-//     file = fopen("/home/gabriel/Documentos/redes-1/controle.txt","w");
-//     if (file != NULL){
-//         fputs("Servidor", file);
-//     };
-//     fclose(file);
-// }
-
-// void getControle(char *controle){
-//     FILE *file;
-//     file = fopen("/home/gabriel/Documentos/redes-1/controle.txt","r");
-//     fscanf(file, "%s", controle);
-//     fclose(file);
-// }

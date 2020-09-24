@@ -1,4 +1,14 @@
 extern void showMenu();
-// void getControle(char *controle);
-// void setControleCliente();
-// void //setControleServidor();
+// void showHelp();
+// void printMsg(Message *msg);
+// void getParity(Message *msg);
+// void setMessage(Message *msg, unsigned char marker, unsigned char size, unsigned char seq, unsigned char type, unsigned char *data);
+// void lls();
+// void lcd(char *arg);
+// void cd(Message *msg, Message *msg_recv, char *arg, int socket);
+// void ls(Message *msg, Message *msg_recv, char *arg, int socket);
+// void ver(Message *msg, Message *msg_recv, char *arg, int socket);
+// void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket);
+// void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, int socket);
+// void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, int socket);
+// void removeAspas(char *words);
