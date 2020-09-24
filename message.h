@@ -1,9 +1,9 @@
 #include "infos.h"
  
-//message class
 typedef struct {
-    //Enquadramento
+    //Marcador
     unsigned char marker:8;
+    //Tamanho
     unsigned char size:4;
     //Sequencializacao
     unsigned char seq:8;

@@ -6,7 +6,7 @@
 int main(void) {
     char command_line[100];
     char command_line_aux[100];
-    char clearBuf[256]; //JG:
+    char clearBuf[256]; 
     int socket = ConexaoRawSocket("lo");
     Message message_send;
     Message message_recv;
@@ -15,7 +15,6 @@ int main(void) {
     setupterm(NULL, STDOUT_FILENO, NULL);
 
     while(1){
-        //setControleCliente();
         showMenu();
         fgets(command_line, 100, stdin);
         strtok(command_line, "\n");

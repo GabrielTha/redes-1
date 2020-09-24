@@ -27,7 +27,6 @@ void printMsg(Message *msg){
     printf("Tamanho: %d \n", msg->size);
     printf("Sequencialização: %d \n", msg->seq);
     printf("Tipo: %d \n", msg->type);
-    // printf("Dados: %s \n", msg->data);
     printf("Dados:");
      for (int i = 0; i < 15; i++){
         printf("%c", msg->data[i]);
@@ -117,13 +116,10 @@ void cd(Message *msg, Message *msg_recv, char *arg, int socket){
     else
     {
         gettimeofday(&tv1, NULL);
-        //printf("Mensagem enviada com sucesso! \n");
-        //printf("Aguardando resposta do Servidor! \n \n");
         while(1){
                 recv(socket, msg_recv, sizeof(*msg_recv), 0);
                 recv(socket, msg_recv, sizeof(*msg_recv), 0);
                 if(msg_recv && msg_recv->marker == '~'){ 
-                    // setControleCliente();
                     if(msg_recv->type == 8){ //ACK
                         printf("Sucesso - Fim do comando CD! \n \n \n");
                         break;
@@ -180,8 +176,6 @@ void ls(Message *msg, Message *msg_recv, char *arg, int socket){
     }
     else{
         gettimeofday(&tv1, NULL);
-        //printf("Mensagem enviada com sucesso! \n");
-        //printf("Aguardando resposta do Servidor! \n \n");
         while(1){ //ESPERANDO RESPOSTA DO SERVIDOR SOBRE O COMANDO INICIAL (DADOS, NACK ou ERRO)
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -270,8 +264,6 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
     }
     else{
         gettimeofday(&tv1, NULL);
-        //printf("Mensagem enviada com sucesso! \n");
-        //printf("Aguardando resposta do Servidor! \n \n");
         while(1){ //ESPERANDO RESPOSTA DO SERVIDOR SOBRE O COMANDO INICIAL (DADOS, NACK ou ERRO)
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -279,22 +271,15 @@ void ver(Message *msg, Message *msg_recv, char *arg, int socket){
                 if(msg_recv->type == 12){ //Recebendo DADOS - 1100
                     if (checkParity(msg_recv) == 1 && msg_recv->seq == (num_seq % 256)){
                         aux = 1;
-                        // printMsg(msg_recv);
-                        // printf("%d\n", (num_seq % 256));
                         num_seq++;
                         sleep(0.05);
-                        // printf("%d\n", (num_seq % 256));
                         cont++;
                         str_all = (char *) realloc(str_all, (cont*15*8));
                         strcat(str_all, msg_recv->data);
-                        // printMsg(msg_recv);
                         char str_aux[15];
                         strcpy(str_aux, msg_recv->data);
-                        // str_aux[strlen(str_aux)]='\0';
-                        // printf("%s", str_aux);
                         if(strstr(str_aux, "\a") != 0){
                             str_all[strcspn(str_all, "\a")] = 0;
-                            // printf("%d - %s", n_lin, str_all);
                             printf("%s", str_all);
                             n_lin++;
                             cont = 0;
@@ -377,8 +362,6 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
     }
     else{
         gettimeofday(&tv1, NULL);
-        //printf("Mensagem enviada com sucesso! \n");
-        //printf("Aguardando resposta do Servidor! \n \n");
         while (1){
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -406,8 +389,6 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
                     }
                     else{
                         gettimeofday(&tv1, NULL);
-                        //printf("Mensagem enviada com sucesso! \n");
-                        //printf("Aguardando resposta do Servidor! \n \n");
                         while(1){ //ESPERANDO RESPOSTA DO SERVIDOR SOBRE O COMANDO INICIAL (DADOS, NACK ou ERRO)
                             recv(socket, msg_recv, sizeof(*msg_recv), 0);
                             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -418,14 +399,10 @@ void linha(Message *msg, Message *msg_recv, char *arg, char *arg2, int socket){
                                         cont++;
                                         str_all = (char *) realloc(str_all, (cont*15*8));
                                         strcat(str_all, msg_recv->data);
-                                        // printMsg(msg_recv);
                                         char str_aux[15];
                                         strcpy(str_aux, msg_recv->data);
-                                        // str_aux[strlen(str_aux)]='\0';
-                                        // printf("%s", str_aux);
                                         if(strstr(str_aux, "\a") != 0){
                                             str_all[strcspn(str_all, "\a")] = 0;
-                                            // printf("%d - %s", n_lin, str_all);
                                             printf("%s", str_all);
                                             n_lin++;
                                             cont = 0;
@@ -526,8 +503,6 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
                     }
                     else{
                         gettimeofday(&tv1, NULL);
-                        //printf("Mensagem enviada com sucesso! \n");
-                        //printf("Aguardando resposta do Servidor! \n \n");
                         while(1){ //ESPERANDO RESPOSTA DO SERVIDOR SOBRE O COMANDO INICIAL (DADOS, NACK ou ERRO)
                             recv(socket, msg_recv, sizeof(*msg_recv), 0);
                             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -538,14 +513,10 @@ void linhas(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, 
                                         cont++;
                                         str_all = (char *) realloc(str_all, (cont*15*8));
                                         strcat(str_all, msg_recv->data);
-                                        // printMsg(msg_recv);
                                         char str_aux[15];
                                         strcpy(str_aux, msg_recv->data);
-                                        // str_aux[strlen(str_aux)]='\0';
-                                        // printf("%s", str_aux);
                                         if(strstr(str_aux, "\a") != 0){
                                             str_all[strcspn(str_all, "\a")] = 0;
-                                            // printf("%d - %s", n_lin, str_all);
                                             printf("%s", str_all);
                                             n_lin++;
                                             cont = 0;
@@ -624,8 +595,6 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
     }
     else{
         gettimeofday(&tv1, NULL);
-        //printf("Mensagem enviada com sucesso! \n");
-        //printf("Aguardando resposta do Servidor! \n \n");
         while (1){
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -652,8 +621,6 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
                     }
                     else{
                         gettimeofday(&tv1, NULL);
-                        //printf("Mensagem enviada com sucesso! \n");
-                        //printf("Aguardando resposta do Servidor! \n \n");
                         while(1){ 
                             recv(socket, msg_recv, sizeof(*msg_recv), 0);
                             recv(socket, msg_recv, sizeof(*msg_recv), 0);
@@ -671,9 +638,6 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
                                     tam_ctrl = tam_strings;
                                     tam_strings_aux = tam_strings;
                                     n_msgs_ctr = n_msgs_ctr;
-                                    // printf("STRING: %s\n", linha);
-                                    // printf("TAMANHO DA STRING: %d\n", tam_strings);
-                                    // printf("NUMERO DE MSG: %d\n", n_msgs);
                                     for (int z = 0; z <= n_msgs; z++){
                                         for (int i = 0; i < 15; i++)
                                             data[i] = 0;
@@ -690,7 +654,6 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
                                             num_seq++;
                                             setMessage(msg, '~' , tam_strings, (num_seq % 256), 12, data); 
                                         }
-                                        // printMsg(&message_send);
                                         jump15:
                                         if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIANDO DADOS - 1011
                                         printf("Erro ao enviar mensagem! \n");
@@ -724,11 +687,8 @@ void edit(Message *msg, Message *msg_recv, char *arg, char *arg2, char *arg3, in
                                     }
 
 
-                                    // Lógica de enviar arg3 particionado
-
                                     num_seq++;
                                     setMessage(msg, '~' , 0, num_seq, 13, data); 
-                                    // printMsg(&message_send); 
                                     jump11:
                                     if (send(socket, msg, sizeof(*msg), 0) == -1){ //ENVIAR FIM DE TRANSMISSÃO - 1101
                                         printf("Erro ao enviar mensagem! \n");
@@ -783,7 +743,6 @@ void removeAspas(char *words){
     int i;
     int len = strlen(words);
     printf("%d",len);
-    // words[len-1] = '\n';
     for(i = 1; i < len; i++)
     {
         words[i - 1] = words[i];

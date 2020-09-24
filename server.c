@@ -18,7 +18,6 @@ int main(void) {
             recv(socket, &message_recv, sizeof(message_recv), 0);
             recv(socket, &message_recv, sizeof(message_recv), 0);
             if(&message_recv && message_recv.marker == '~'){ 
-                // int t = checkParity(&message_recv);
                 if(checkParity(&message_recv) == 0 && message_recv.type != 8 && message_recv.type != 9){ //NACK - 1001 (Não envia Nack para Ack/Nack)
                     setMessage(&message_send, '~' , 0, 0, 9, 0);
                     send(socket, &message_send, sizeof(message_send), 0);
@@ -115,9 +114,6 @@ int main(void) {
                         tam_ctrl = tam_strings;
                         tam_strings_aux = tam_strings;
                         n_msgs_ctr = n_msgs_ctr;
-                        // printf("STRING: %s\n", ls_full);
-                        // printf("TAMANHO DA STRING: %d\n", tam_strings);
-                        // printf("NUMERO DE MSG: %d\n", n_msgs);
                         for (z = 0; z <= n_msgs; z++){
                             for (int i = 0; i < 15; i++)
                                 data[i] = NULL;
@@ -166,7 +162,6 @@ int main(void) {
                         }
                         num_seq++;
                         setMessage(&message_send, '~' , 0, (num_seq % 256), 13, data); 
-                        // printMsg(&message_send); 
                         jump3:
                         if (send(socket, &message_send, sizeof(message_send), 0) == -1){ //ENVIAR FIM DE TRANSMISSÃO - 1101
                             printf("Erro ao enviar mensagem! \n");
@@ -179,7 +174,6 @@ int main(void) {
                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                     if(&message_recv && message_recv.marker == '~'){ 
-                                        //setControleServidor();
                                         if(message_recv.type == 8){
                                             printf("Fim do Comando LS!\n \n");
                                             goto origem;
@@ -252,8 +246,6 @@ int main(void) {
                                     strcat(cnt_linha, " - ");
                                     strcat(cnt_linha, linha);
                                     strcpy(linha, cnt_linha);
-                                    // printf("%d - %s",(strlen(linha)/14), linha);
-                                    // printf("---------\n");
                                     linha[(strlen(linha)-1)] = '\0';
                                     strcat(linha, "\a"),
                                     tam_strings = strlen(linha);
@@ -261,9 +253,6 @@ int main(void) {
                                     tam_ctrl = tam_strings;
                                     tam_strings_aux = tam_strings;
                                     n_msgs_ctr = n_msgs_ctr;
-                                    // printf("STRING: %s\n", linha);
-                                    // printf("TAMANHO DA STRING: %d\n", tam_strings);
-                                    // printf("NUMERO DE MSG: %d\n", n_msgs);
                                     for (z = 0; z <= n_msgs; z++){
                                         for (int i = 0; i < 15; i++)
                                             data[i] = 0;
@@ -292,7 +281,6 @@ int main(void) {
                                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                                     if(&message_recv && message_recv.marker == '~'){ 
-                                                        //setControleServidor();
                                                         if(message_recv.type == 8){
                                                             sleep(0.05);
                                                             break;
@@ -424,8 +412,6 @@ int main(void) {
                                                     strcat(cnt_linha, " - ");
                                                     strcat(cnt_linha, linha);
                                                     strcpy(linha, cnt_linha);
-                                                    // printf("%d - %s",(strlen(linha)/14), linha);
-                                                    // printf("---------\n");
                                                     linha[(strlen(linha)-1)] = '\0';
                                                     strcat(linha, "\a"),
                                                     tam_strings = strlen(linha);
@@ -433,9 +419,6 @@ int main(void) {
                                                     tam_ctrl = tam_strings;
                                                     tam_strings_aux = tam_strings;
                                                     n_msgs_ctr = n_msgs_ctr;
-                                                    // printf("STRING: %s\n", linha);
-                                                    // printf("TAMANHO DA STRING: %d\n", tam_strings);
-                                                    // printf("NUMERO DE MSG: %d\n", n_msgs);
                                                     for (z = 0; z <= n_msgs; z++){
                                                         for (int i = 0; i < 15; i++)
                                                             data[i] = 0;
@@ -452,7 +435,6 @@ int main(void) {
                                                             num_seq++;
                                                             setMessage(&message_send, '~' , tam_strings, num_seq, 12, data); 
                                                         }
-                                                        // printMsg(&message_send);
                                                         jump9:
                                                         if (send(socket, &message_send, sizeof(message_send), 0) == -1){ //ENVIANDO DADOS - 1011
                                                         printf("Erro ao enviar mensagem! \n");
@@ -655,8 +637,6 @@ int main(void) {
                                                     strcat(cnt_linha, " - ");
                                                     strcat(cnt_linha, linha);
                                                     strcpy(linha, cnt_linha);
-                                                    // printf("%d - %s",(strlen(linha)/14), linha);
-                                                    // printf("---------\n");
                                                     linha[(strlen(linha)-1)] = '\0';
                                                     strcat(linha, "\a"),
                                                     tam_strings = strlen(linha);
@@ -664,9 +644,6 @@ int main(void) {
                                                     tam_ctrl = tam_strings;
                                                     tam_strings_aux = tam_strings;
                                                     n_msgs_ctr = n_msgs_ctr;
-                                                    // printf("STRING: %s\n", linha);
-                                                    // printf("TAMANHO DA STRING: %d\n", tam_strings);
-                                                    // printf("NUMERO DE MSG: %d\n", n_msgs);
                                                     for (z = 0; z <= n_msgs; z++){
                                                         for (int i = 0; i < 15; i++)
                                                             data[i] = 0;
@@ -683,7 +660,6 @@ int main(void) {
                                                             num_seq++;
                                                             setMessage(&message_send, '~' , tam_strings, (num_seq % 256), 12, data); 
                                                         }
-                                                        // printMsg(&message_send);
                                                         jump15:
                                                         if (send(socket, &message_send, sizeof(message_send), 0) == -1){ //ENVIANDO DADOS - 1011
                                                         printf("Erro ao enviar mensagem! \n");
@@ -696,7 +672,6 @@ int main(void) {
                                                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                                                     if(&message_recv && message_recv.marker == '~'){ 
-                                                                        //setControleServidor();
                                                                         if(message_recv.type == 8){
                                                                             sleep(0.05);
                                                                             break;
@@ -767,7 +742,6 @@ int main(void) {
                     fclose(file);
                     num_seq++;
                     setMessage(&message_send, '~' , 0, (num_seq % 256), 13, data); 
-                        // printMsg(&message_send); 
                         jump11:
                         if (send(socket, &message_send, sizeof(message_send), 0) == -1){ //ENVIAR FIM DE TRANSMISSÃO - 1101
                             printf("Erro ao enviar mensagem! \n");
@@ -780,7 +754,6 @@ int main(void) {
                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                     recv(socket, &message_recv, sizeof(message_recv), 0);
                                     if(&message_recv && message_recv.marker == '~'){ 
-                                        //setControleServidor();
                                         if(message_recv.type == 8){
                                             printf("Fim do Comando LINHAS!\n \n");
                                             goto origem;
@@ -901,11 +874,8 @@ int main(void) {
                                                             cont++;
                                                             str_all = (char *) realloc(str_all, (cont*15*8));
                                                             strcat(str_all, message_recv.data);
-                                                            // printMsg(msg_recv);
                                                             char str_aux[15];
                                                             strcpy(str_aux, message_recv.data);
-                                                            // str_aux[strlen(str_aux)]='\0';
-                                                            // printf("%s", str_aux);
                                                             
                                                             setMessage(&message_send, '~' , 0, 0, 8, 0); //Enviando ACK
                                                             send(socket, &message_send, sizeof(message_send), 0);
@@ -966,7 +936,6 @@ int main(void) {
                                             }
 
                                         }
-                                        
                                         break;
                                     }
                                 }
